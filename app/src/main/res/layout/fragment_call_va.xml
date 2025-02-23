@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/constraintLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Image/GIF via Fresco -->
+    <com.facebook.drawee.view.SimpleDraweeView
+        android:id="@+id/gifView"
+        android:layout_width="0dp"
+        android:layout_height="350dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:placeholderImage="@raw/voice_assistant"
+        android:contentDescription="@string/description_gif" />
+
+    <!-- Titre -->
+    <TextView
+        android:id="@+id/call_va_title_text_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="30dp"
+        android:fontFamily="@font/din_regular"
+        android:text="@string/tutorial_call_va_title_text"
+        android:textAllCaps="true"
+        android:textSize="18sp"
+        app:layout_constraintTop_toBottomOf="@+id/gifView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Texte explicatif -->
+    <TextView
+        android:id="@+id/call_va_content_text_view"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="50dp"
+        android:layout_marginEnd="50dp"
+        android:layout_marginTop="30dp"
+        android:gravity="center"
+        android:text="@string/tutorial_call_va_intro"
+        android:textColor="@color/colorGray"
+        android:textSize="12sp"
+        app:layout_constraintTop_toBottomOf="@+id/call_va_title_text_view"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_auth"
+    app:startDestination="@+id/authFragment">
+    <fragment
+        android:label="auth_fragment"
+        android:name="com.origamilabs.orii.ui.auth.AuthFragment"
+        android:id="@+id/authFragment">
+        <action
+            android:id="@+id/action_authFragment_to_loginFragment"
+            app:destination="@+id/loginFragment"/>
+        <action
+            android:id="@+id/action_authFragment_to_registerFragment"
+            app:destination="@+id/registerFragment"/>
+        <deepLink app:uri="http://parallaxhk.ddns.net:3000/verify/email/{userId}/{verifyCode}"/>
+        <deepLink app:uri="https://admin.orii.co/verify/email/{userId}/{verifyCode}"/>
+        <argument
+            android:name="userId"
+            app:argType="string"/>
+        <argument
+            android:name="verifyCode"
+            app:argType="string"/>
+    </fragment>
+    <fragment
+        android:label="login_fragment"
+        android:name="com.origamilabs.orii.ui.auth.login.LoginFragment"
+        android:id="@+id/loginFragment">
+        <action
+            android:id="@+id/action_loginFragment_to_forgotPasswordFragment"
+            app:destination="@+id/forgotPasswordFragment"/>
+    </fragment>
+    <fragment
+        android:label="register_fragment"
+        android:name="com.origamilabs.orii.ui.auth.register.RegisterFragment"
+        android:id="@+id/registerFragment">
+        <action
+            android:id="@+id/action_registerFragment_to_mailSentFragment"
+            app:destination="@+id/mailSentFragment"/>
+    </fragment>
+    <fragment
+        android:label="fragment_mail_sent"
+        android:name="com.origamilabs.orii.ui.auth.MailSentFragment"
+        android:id="@+id/mailSentFragment">
+        <action
+            android:id="@+id/action_mailSentFragment_to_loginFragment"
+            app:destination="@+id/loginFragment"
+            app:launchSingleTop="true"/>
+    </fragment>
+    <fragment
+        android:label="forgot_password_fragment"
+        android:name="com.origamilabs.orii.ui.auth.forgotpw.ForgotPasswordFragment"
+        android:id="@+id/forgotPasswordFragment"/>
+</navigation>

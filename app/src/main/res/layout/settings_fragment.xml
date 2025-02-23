@@ -1,0 +1,814 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- CardView : Read Speed -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/read_speed_card_view"
+            android:layout_width="match_parent"
+            android:layout_height="117dp"
+            android:layout_marginTop="13dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:id="@+id/read_speed_title_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="11dp"
+                    android:layout_marginStart="12dp"
+                    android:fontFamily="@font/din_regular"
+                    android:text="@string/setting_read_speed_title"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/read_speed_content_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginStart="12dp"
+                    android:fontFamily="@font/din_regular"
+                    android:text="@string/setting_read_speed_text"
+                    android:textColor="@color/colorTextSecondary"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/read_speed_title_text_view" />
+
+                <SeekBar
+                    android:id="@+id/readout_speed_seek_bar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:max="15"
+                    android:progress="20"
+                    android:progressTint="@color/colorTransparent"
+                    android:thumb="@drawable/gesture_switch_thumb_background"
+                    app:layout_constraintTop_toBottomOf="@+id/read_speed_content_text_view"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/imageView3"
+                    app:layout_constraintEnd_toStartOf="@+id/imageView4" />
+
+                <!-- Indicateur “Slow” à gauche du SeekBar -->
+                <TextView
+                    android:id="@+id/imageView3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="@string/setting_read_speed_slow"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/din_regular"
+                    app:layout_constraintTop_toTopOf="@+id/readout_speed_seek_bar"
+                    app:layout_constraintBottom_toBottomOf="@+id/readout_speed_seek_bar"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+                <!-- Indicateur “Fast” à droite du SeekBar -->
+                <TextView
+                    android:id="@+id/imageView4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="12dp"
+                    android:text="@string/setting_read_speed_fast"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/din_regular"
+                    app:layout_constraintTop_toTopOf="@+id/readout_speed_seek_bar"
+                    app:layout_constraintBottom_toBottomOf="@+id/readout_speed_seek_bar"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- CardView : Swap Mic -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/swap_mic_card_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="13dp"
+            app:layout_constraintTop_toBottomOf="@+id/read_speed_card_view"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:id="@+id/swap_mic_title_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="11dp"
+                    android:layout_marginStart="12dp"
+                    android:fontFamily="@font/din_regular"
+                    android:text="@string/setting_swap_mic_mode_title"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/swap_mic_content_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginStart="12dp"
+                    android:fontFamily="@font/din_regular"
+                    android:text="@string/setting_swap_mic_mode_text"
+                    android:textColor="@color/colorTextSecondary"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/swap_mic_title_text_view" />
+
+                <ImageView
+                    android:id="@+id/imageView5"
+                    android:layout_width="84dp"
+                    android:layout_height="120dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="12dp"
+                    android:src="@drawable/swap_mic_orii_image"
+                    app:layout_constraintTop_toBottomOf="@+id/swap_mic_content_text_view"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+                <!-- Mic Mode Left -->
+                <ImageView
+                    android:id="@+id/mic_mode_left_image_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintTop_toTopOf="@+id/imageView5"
+                    app:layout_constraintBottom_toBottomOf="@+id/imageView5"
+                    app:layout_constraintEnd_toStartOf="@+id/imageView5"
+                    android:layout_marginEnd="27dp" />
+
+                <!-- Mic Mode Right (rotated 180°) -->
+                <ImageView
+                    android:id="@+id/mic_mode_right_image_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:rotation="180"
+                    app:layout_constraintTop_toTopOf="@+id/imageView5"
+                    app:layout_constraintBottom_toBottomOf="@+id/imageView5"
+                    app:layout_constraintStart_toEndOf="@+id/imageView5"
+                    android:layout_marginStart="27dp" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- CardView : Gestures -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/gestures_card_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="13dp"
+            app:layout_constraintTop_toBottomOf="@+id/swap_mic_card_view"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <TextView
+                    android:id="@+id/gestures_title_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="11dp"
+                    android:layout_marginStart="12dp"
+                    android:fontFamily="@font/din_regular"
+                    android:text="@string/setting_gestures_title"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/gestures_content_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:layout_marginStart="12dp"
+                    android:fontFamily="@font/din_regular"
+                    android:text="@string/setting_gestures_text"
+                    android:textColor="@color/colorTextSecondary"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/gestures_title_text_view" />
+
+                <!-- Contrôle Gestures on/off -->
+                <TextView
+                    android:id="@+id/gestures_controller_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="50dp"
+                    android:text="@string/setting_gestures_controller_off"
+                    app:layout_constraintBottom_toBottomOf="@+id/gestures_content_text_view"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+                <androidx.appcompat.widget.AppCompatCheckBox
+                    android:id="@+id/gestures_controller_check_box"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="10dp"
+                    android:buttonTint="@color/global_gesture_radio_button_color"
+                    android:fontFamily="@font/din_regular"
+                    android:textSize="16sp"
+                    app:layout_constraintTop_toTopOf="@+id/gestures_controller_text_view"
+                    app:layout_constraintBottom_toBottomOf="@+id/gestures_controller_text_view"
+                    app:layout_constraintStart_toEndOf="@+id/gestures_controller_text_view"
+                    style="@android:style/Widget.CompoundButton.RadioButton" />
+
+                <!-- Layout : UP Double Tap -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/gesture_up_double_tap_constraint_layout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    app:layout_constraintTop_toBottomOf="@+id/gestures_content_text_view"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/gesture_down_double_tap_constraint_layout"
+                    app:layout_constraintBottom_toTopOf="@+id/gesture_side_double_tap_constraint_layout"
+                    app:layout_constraintHorizontal_weight="1">
+
+                    <TextView
+                        android:id="@+id/gesture_up_double_tap_title_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_up_double_tap_title"
+                        android:textColor="@color/colorGestureBlack"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@+id/gesture_up_double_tap_content_1_text_view"
+                        app:layout_constraintVertical_chainStyle="packed"
+                        app:layout_constraintStart_toStartOf="parent" />
+
+                    <TextView
+                        android:id="@+id/gesture_up_double_tap_content_1_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="19dp"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_up_double_tap_content_1"
+                        android:textColor="@color/colorGestureBlack"
+                        android:textSize="11sp"
+                        app:layout_constraintTop_toBottomOf="@+id/gesture_up_double_tap_title_text_view"
+                        app:layout_constraintStart_toStartOf="@+id/gesture_up_double_tap_title_text_view"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <TextView
+                        android:id="@+id/gesture_up_double_tap_content_2_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_up_double_tap_content_2"
+                        android:textColor="@color/colorGray"
+                        android:textSize="9sp"
+                        app:layout_constraintTop_toBottomOf="@+id/gesture_up_double_tap_content_1_text_view"
+                        app:layout_constraintStart_toStartOf="@+id/gesture_up_double_tap_content_1_text_view" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/gesture_up_double_tap_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        style="@style/SwitchCompatTheme"
+                        app:layout_constraintTop_toTopOf="@+id/gesture_up_double_tap_content_1_text_view"
+                        app:layout_constraintBottom_toBottomOf="@+id/gesture_up_double_tap_content_2_text_view"
+                        app:layout_constraintEnd_toEndOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Layout : DOWN Double Tap -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/gesture_down_double_tap_constraint_layout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    app:layout_constraintTop_toBottomOf="@+id/gestures_content_text_view"
+                    app:layout_constraintStart_toEndOf="@+id/gesture_up_double_tap_constraint_layout"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintBottom_toTopOf="@+id/gesture_flat_double_tap_constraint_layout"
+                    app:layout_constraintHorizontal_weight="1">
+
+                    <TextView
+                        android:id="@+id/gesture_down_double_tap_title_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_down_double_tap_title"
+                        android:textColor="@color/colorGestureBlack"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@+id/gesture_down_double_tap_content_1_text_view"
+                        app:layout_constraintVertical_chainStyle="packed"
+                        app:layout_constraintStart_toStartOf="parent" />
+
+                    <TextView
+                        android:id="@+id/gesture_down_double_tap_content_1_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="19dp"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_down_double_tap_content_1"
+                        android:textColor="@color/colorGestureBlack"
+                        android:textSize="11sp"
+                        app:layout_constraintTop_toBottomOf="@+id/gesture_down_double_tap_title_text_view"
+                        app:layout_constraintStart_toStartOf="@+id/gesture_down_double_tap_title_text_view"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <TextView
+                        android:id="@+id/gesture_down_double_tap_content_2_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_down_double_tap_content_2"
+                        android:textColor="@color/colorGray"
+                        android:textSize="9sp"
+                        app:layout_constraintTop_toBottomOf="@+id/gesture_down_double_tap_content_1_text_view"
+                        app:layout_constraintStart_toStartOf="@+id/gesture_down_double_tap_content_1_text_view" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/gesture_down_double_tap_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        style="@style/SwitchCompatTheme"
+                        app:layout_constraintTop_toTopOf="@+id/gesture_down_double_tap_content_1_text_view"
+                        app:layout_constraintBottom_toBottomOf="@+id/gesture_down_double_tap_content_2_text_view"
+                        app:layout_constraintEnd_toEndOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Layout : SIDE Double Tap -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/gesture_side_double_tap_constraint_layout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    app:layout_constraintTop_toBottomOf="@+id/gesture_up_double_tap_constraint_layout"
+                    app:layout_constraintBottom_toTopOf="@+id/gesture_flat_triple_tap_constraint_layout"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/gesture_flat_double_tap_constraint_layout"
+                    app:layout_constraintHorizontal_weight="1">
+
+                    <TextView
+                        android:id="@+id/gesture_side_double_tap_title_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_side_double_tap_title"
+                        android:textColor="@color/colorGestureBlack"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@+id/gesture_side_double_tap_content_text_view"
+                        app:layout_constraintVertical_chainStyle="packed"
+                        app:layout_constraintStart_toStartOf="parent" />
+
+                    <TextView
+                        android:id="@+id/gesture_side_double_tap_content_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="19dp"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_side_double_tap_content"
+                        android:textColor="@color/colorGestureBlack"
+                        android:textSize="11sp"
+                        app:layout_constraintTop_toBottomOf="@+id/gesture_side_double_tap_title_text_view"
+                        app:layout_constraintStart_toStartOf="@+id/gesture_side_double_tap_title_text_view"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/gesture_side_double_tap_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        style="@style/SwitchCompatTheme"
+                        app:layout_constraintTop_toTopOf="@+id/gesture_side_double_tap_content_text_view"
+                        app:layout_constraintBottom_toBottomOf="@+id/gesture_side_double_tap_content_text_view"
+                        app:layout_constraintEnd_toEndOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Layout : FLAT Double Tap -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/gesture_flat_double_tap_constraint_layout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    app:layout_constraintTop_toBottomOf="@+id/gesture_down_double_tap_constraint_layout"
+                    app:layout_constraintBottom_toTopOf="@+id/gesture_reverse_double_tap_constraint_layout"
+                    app:layout_constraintStart_toEndOf="@+id/gesture_side_double_tap_constraint_layout"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_weight="1">
+
+                    <TextView
+                        android:id="@+id/gesture_flat_double_tap_title_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_flat_double_tap_title"
+                        android:textColor="@color/colorGestureBlack"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@+id/gesture_flat_double_tap_content_text_view"
+                        app:layout_constraintVertical_chainStyle="packed"
+                        app:layout_constraintStart_toStartOf="parent" />
+
+                    <TextView
+                        android:id="@+id/gesture_flat_double_tap_content_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="19dp"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_flat_double_tap_content"
+                        android:textColor="@color/colorGestureBlack"
+                        android:textSize="11sp"
+                        app:layout_constraintTop_toBottomOf="@+id/gesture_flat_double_tap_title_text_view"
+                        app:layout_constraintStart_toStartOf="@+id/gesture_flat_double_tap_title_text_view"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/gesture_flat_double_tap_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        style="@style/SwitchCompatTheme"
+                        app:layout_constraintTop_toTopOf="@+id/gesture_flat_double_tap_content_text_view"
+                        app:layout_constraintBottom_toBottomOf="@+id/gesture_flat_double_tap_content_text_view"
+                        app:layout_constraintEnd_toEndOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Layout : FLAT Triple Tap -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/gesture_flat_triple_tap_constraint_layout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="30dp"
+                    app:layout_constraintTop_toBottomOf="@+id/gesture_side_double_tap_constraint_layout"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/gesture_reverse_double_tap_constraint_layout"
+                    app:layout_constraintHorizontal_weight="1">
+
+                    <TextView
+                        android:id="@+id/gesture_flat_triple_tap_title_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_flat_triple_tap_title"
+                        android:textColor="@color/colorGestureBlack"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@+id/gesture_flat_triple_tap_content_text_view"
+                        app:layout_constraintVertical_chainStyle="packed"
+                        app:layout_constraintStart_toStartOf="parent" />
+
+                    <ImageView
+                        android:id="@+id/gesture_flat_triple_tap_question_mark_image_view"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:padding="5dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ic_question_mark"
+                        app:layout_constraintTop_toTopOf="@+id/gesture_flat_triple_tap_title_text_view"
+                        app:layout_constraintBottom_toBottomOf="@+id/gesture_flat_triple_tap_title_text_view"
+                        app:layout_constraintStart_toEndOf="@+id/gesture_flat_triple_tap_title_text_view" />
+
+                    <TextView
+                        android:id="@+id/gesture_flat_triple_tap_content_text_view"
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="17dp"
+                        android:fontFamily="@font/din_regular"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"
+                        android:text="@string/setting_gesture_flat_triple_tap_content"
+                        android:textColor="@color/colorGreen"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        app:layout_constraintTop_toBottomOf="@+id/gesture_flat_triple_tap_title_text_view"
+                        app:layout_constraintStart_toStartOf="@+id/gesture_flat_triple_tap_title_text_view"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/gesture_flat_triple_tap_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        style="@style/SwitchCompatTheme"
+                        app:layout_constraintTop_toTopOf="@+id/gesture_flat_triple_tap_content_text_view"
+                        app:layout_constraintBottom_toBottomOf="@+id/gesture_flat_triple_tap_content_text_view"
+                        app:layout_constraintEnd_toEndOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Lien “Enter URL” sous le Layout flat_triple_tap -->
+                <TextView
+                    android:id="@+id/gesture_flat_triple_tap_web_hook_url_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:layout_marginStart="12dp"
+                    android:fontFamily="@font/din_regular"
+                    android:text="@string/setting_gesture_flat_triple_tap_enter_url"
+                    android:textColor="@color/colorGreen"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toBottomOf="@+id/gesture_flat_triple_tap_constraint_layout"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="@+id/gesture_flat_triple_tap_constraint_layout" />
+
+                <!-- Layout : REVERSE Double Tap -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/gesture_reverse_double_tap_constraint_layout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:layout_marginBottom="30dp"
+                    app:layout_constraintTop_toBottomOf="@+id/gesture_flat_double_tap_constraint_layout"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/gesture_flat_triple_tap_constraint_layout"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_weight="1">
+
+                    <TextView
+                        android:id="@+id/gesture_reverse_double_tap_title_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_reverse_double_tap_title"
+                        android:textColor="@color/colorGestureBlack"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@+id/gesture_reverse_double_tap_content_text_view"
+                        app:layout_constraintVertical_chainStyle="packed"
+                        app:layout_constraintStart_toStartOf="parent" />
+
+                    <ImageView
+                        android:id="@+id/gesture_reverse_double_tap_question_mark_image_view"
+                        android:layout_width="30dp"
+                        android:layout_height="30dp"
+                        android:padding="5dp"
+                        android:scaleType="fitCenter"
+                        android:src="@drawable/ic_question_mark"
+                        app:layout_constraintTop_toTopOf="@+id/gesture_reverse_double_tap_title_text_view"
+                        app:layout_constraintBottom_toBottomOf="@+id/gesture_reverse_double_tap_title_text_view"
+                        app:layout_constraintStart_toEndOf="@+id/gesture_reverse_double_tap_title_text_view" />
+
+                    <TextView
+                        android:id="@+id/gesture_reverse_double_tap_content_text_view"
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="19dp"
+                        android:fontFamily="@font/din_regular"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"
+                        android:text="@string/setting_gesture_reverse_double_tap_content"
+                        android:textColor="@color/colorGreen"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        app:layout_constraintTop_toBottomOf="@+id/gesture_reverse_double_tap_title_text_view"
+                        app:layout_constraintStart_toStartOf="@+id/gesture_reverse_double_tap_title_text_view"
+                        app:layout_constraintBottom_toBottomOf="parent" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/gesture_reverse_double_tap_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        style="@style/SwitchCompatTheme"
+                        app:layout_constraintTop_toTopOf="@+id/gesture_reverse_double_tap_content_text_view"
+                        app:layout_constraintBottom_toBottomOf="@+id/gesture_reverse_double_tap_content_text_view"
+                        app:layout_constraintEnd_toEndOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Lien “Enter URL” sous le Layout reverse_double_tap -->
+                <TextView
+                    android:id="@+id/gesture_reverse_double_tap_web_hook_url_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:layout_marginStart="12dp"
+                    android:fontFamily="@font/din_regular"
+                    android:text="@string/setting_gesture_flat_triple_tap_enter_url"
+                    android:textColor="@color/colorGreen"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    app:layout_constraintTop_toBottomOf="@+id/gesture_reverse_double_tap_constraint_layout"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="@+id/gesture_reverse_double_tap_constraint_layout" />
+
+                <!-- Layout Call Control (invisible) -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/gesture_call_control_constraint_layout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toBottomOf="@+id/gesture_flat_triple_tap_constraint_layout"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/gesture_reserved_constraint_layout"
+                    app:layout_constraintHorizontal_weight="1">
+
+                    <TextView
+                        android:id="@+id/gesture_call_control_title_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_call_control_title"
+                        android:textColor="@color/colorGestureBlack"
+                        android:textSize="12sp"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@+id/gesture_call_control_content_text_view"
+                        app:layout_constraintEnd_toStartOf="@+id/gesture_call_control_switch"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintVertical_chainStyle="packed" />
+
+                    <TextView
+                        android:id="@+id/gesture_call_control_content_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="17dp"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_call_control_content"
+                        android:textColor="@color/colorGestureBlack"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        app:layout_constraintTop_toBottomOf="@+id/gesture_call_control_title_text_view"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="@+id/gesture_call_control_title_text_view"
+                        app:layout_constraintEnd_toEndOf="@+id/gesture_call_control_title_text_view" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/gesture_call_control_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        style="@style/SwitchCompatTheme"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+                <!-- Layout Reserved (invisible) -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/gesture_reserved_constraint_layout"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:visibility="gone"
+                    app:layout_constraintTop_toBottomOf="@+id/gesture_reverse_double_tap_constraint_layout"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/gesture_call_control_constraint_layout"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintHorizontal_weight="1">
+
+                    <TextView
+                        android:id="@+id/gesture_reserved_title_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_reserved_title"
+                        android:textColor="@color/colorGestureBlack"
+                        android:textSize="12sp"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toTopOf="@+id/gesture_reserved_content_text_view"
+                        app:layout_constraintEnd_toStartOf="@+id/gesture_reserved_switch"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintVertical_chainStyle="packed" />
+
+                    <TextView
+                        android:id="@+id/gesture_reserved_content_text_view"
+                        android:layout_width="wrap_content"
+                        android:layout_height="17dp"
+                        android:fontFamily="@font/din_regular"
+                        android:text="@string/setting_gesture_reserved_content"
+                        android:textColor="@color/colorGestureBlack"
+                        android:textSize="10sp"
+                        android:textStyle="bold"
+                        app:layout_constraintTop_toBottomOf="@+id/gesture_reserved_title_text_view"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="@+id/gesture_reserved_title_text_view"
+                        app:layout_constraintEnd_toEndOf="@+id/gesture_reserved_title_text_view" />
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/gesture_reserved_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="10dp"
+                        style="@style/SwitchCompatTheme"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.cardview.widget.CardView>
+
+        <!-- CardView : Gesture Tap Strength -->
+        <androidx.cardview.widget.CardView
+            android:id="@+id/gesture_tap_strength_card_view"
+            android:layout_width="match_parent"
+            android:layout_height="117dp"
+            android:layout_marginTop="13dp"
+            android:layout_marginBottom="50dp"
+            app:layout_constraintTop_toBottomOf="@+id/gestures_card_view"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:id="@+id/gesture_tap_strength_title_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginTop="11dp"
+                    android:fontFamily="@font/din_regular"
+                    android:text="@string/setting_gesture_tap_strength_title"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:id="@+id/gesture_tap_strength_content_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginTop="3dp"
+                    android:fontFamily="@font/din_regular"
+                    android:text="@string/setting_gesture_tap_strength_text"
+                    android:textColor="@color/colorTextSecondary"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/gesture_tap_strength_title_text_view" />
+
+                <SeekBar
+                    android:id="@+id/gesture_tap_strength_seek_bar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_marginEnd="10dp"
+                    android:max="15"
+                    android:progressTint="@color/colorTransparent"
+                    android:thumb="@drawable/gesture_switch_thumb_background"
+                    app:layout_constraintTop_toBottomOf="@+id/gesture_tap_strength_content_text_view"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toEndOf="@+id/gesture_tap_strength_weak_text_view"
+                    app:layout_constraintEnd_toStartOf="@+id/gesture_tap_strength_strong_text_view" />
+
+                <TextView
+                    android:id="@+id/gesture_tap_strength_weak_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:text="@string/setting_gesture_tap_strength_weak"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/din_regular"
+                    app:layout_constraintTop_toTopOf="@+id/gesture_tap_strength_seek_bar"
+                    app:layout_constraintBottom_toBottomOf="@+id/gesture_tap_strength_seek_bar"
+                    app:layout_constraintStart_toStartOf="parent" />
+
+                <TextView
+                    android:id="@+id/gesture_tap_strength_strong_text_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="12dp"
+                    android:text="@string/setting_gesture_tap_strength_strong"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/din_regular"
+                    app:layout_constraintTop_toTopOf="@+id/gesture_tap_strength_seek_bar"
+                    app:layout_constraintBottom_toBottomOf="@+id/gesture_tap_strength_seek_bar"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </androidx.cardview.widget.CardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>

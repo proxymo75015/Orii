@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "770750566271",
+    "project_id": "origamilabs-63860",
+    "storage_bucket": "origamilabs-63860.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:770750566271:android:ddfcb15b6ba21e9b9b944a",
+        "android_client_info": {
+          "package_name": "com.origamilabs.orii"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9QNnSddyfWLbfEXeK84wTGFsl7vih604"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

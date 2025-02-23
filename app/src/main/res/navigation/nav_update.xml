@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_update"
+    app:startDestination="@+id/updateInfoFragment">
+    <fragment
+        android:label="update_info_fragment"
+        android:name="com.origamilabs.orii.ui.main.home.update.info.UpdateInfoFragment"
+        android:id="@+id/updateInfoFragment">
+        <action
+            android:id="@+id/action_updateInfoFragment_to_reminderFragment"
+            app:destination="@+id/reminderFragment"/>
+    </fragment>
+    <fragment
+        android:label="reminder_fragment"
+        android:name="com.origamilabs.orii.ui.main.home.update.reminder.ReminderFragment"
+        android:id="@+id/reminderFragment">
+        <action
+            android:id="@+id/action_reminderFragment_to_batteryAlertFragment"
+            app:destination="@+id/batteryAlertFragment"/>
+        <action
+            android:id="@+id/action_reminderFragment_to_updatingFragment"
+            app:destination="@+id/updatingFragment"/>
+    </fragment>
+    <fragment
+        android:label="battery_alert_fragment"
+        android:name="com.origamilabs.orii.ui.main.home.update.batteryalert.BatteryAlertFragment"
+        android:id="@+id/batteryAlertFragment">
+        <action
+            android:id="@+id/action_batteryAlertFragment_to_updatingFragment"
+            app:destination="@+id/updatingFragment"/>
+    </fragment>
+    <fragment
+        android:label="updating_fragment"
+        android:name="com.origamilabs.orii.ui.main.home.update.updating.UpdatingFragment"
+        android:id="@+id/updatingFragment"/>
+</navigation>

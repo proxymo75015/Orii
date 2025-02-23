@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:state_focused="true"
+        android:state_enabled="true"
+        android:state_checked="true"
+        android:drawable="@drawable/circle_border_green_2dp"
+        android:color="@color/colorTransparent"/>
+    <item
+        android:state_enabled="false"
+        android:drawable="@drawable/circle_border_gray_2dp"
+        android:color="@color/colorTransparent"/>
+    <item
+        android:state_focused="false"
+        android:state_enabled="true"
+        android:state_checked="true"
+        android:drawable="@drawable/circle_border_green_2dp"
+        android:color="@color/colorTransparent"/>
+    <item
+        android:drawable="@drawable/circle_border_green_2dp"
+        android:color="@color/colorTransparent"/>
+</selector>

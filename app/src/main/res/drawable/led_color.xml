@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<level-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:drawable="@drawable/led_color_off"
+        android:maxLevel="0"/>
+    <item
+        android:drawable="@drawable/led_color_blue"
+        android:maxLevel="1"/>
+    <item
+        android:drawable="@drawable/led_color_red"
+        android:maxLevel="2"/>
+    <item
+        android:drawable="@drawable/led_color_green"
+        android:maxLevel="3"/>
+    <item
+        android:drawable="@drawable/led_color_purple"
+        android:maxLevel="4"/>
+    <item
+        android:drawable="@drawable/led_color_yellow"
+        android:maxLevel="5"/>
+</level-list>

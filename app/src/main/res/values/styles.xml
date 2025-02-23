@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- ========================================================= -->
+    <!-- Thème de base personnalisé (MaterialComponents)          -->
+    <!-- ========================================================= -->
+    <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <!-- Couleurs principales -->
+        <item name="colorPrimary">@color/primary_material_light</item>
+        <item name="colorPrimaryVariant">@color/primary_dark_material_light</item>
+        <item name="colorSecondary">@color/accent_material_light</item>
+        <!-- Typographie -->
+        <item name="android:fontFamily">@font/din_regular</item>
+        <!-- Attributs système -->
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <!-- ========================================================= -->
+    <!-- Style pour les boutons personnalisés                    -->
+    <!-- ========================================================= -->
+    <style name="AppButton" parent="Widget.MaterialComponents.Button">
+        <item name="android:padding">@dimen/padding_button</item>
+        <item name="cornerRadius">@dimen/button_corner_radius</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+
+    <!-- ========================================================= -->
+    <!-- Style pour la Toolbar / AppBar                           -->
+    <!-- ========================================================= -->
+    <style name="AppAppBar" parent="Widget.MaterialComponents.Toolbar">
+        <item name="android:background">?attr/colorPrimary</item>
+        <item name="titleTextAppearance">@style/TextAppearance.MaterialComponents.Headline6</item>
+    </style>
+
+    <!-- ========================================================= -->
+    <!-- Autres styles personnalisés (Text, Switch, etc.)         -->
+    <!-- ========================================================= -->
+    <!-- Par exemple, pour un TextView personnalisé -->
+    <style name="AppText" parent="TextAppearance.MaterialComponents.Body1">
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+    </style>
+
+</resources>

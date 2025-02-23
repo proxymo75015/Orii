@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<level-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:drawable="@drawable/battery00"
+        android:maxLevel="0"/>
+    <item
+        android:drawable="@drawable/battery01"
+        android:maxLevel="1"/>
+    <item
+        android:drawable="@drawable/battery02"
+        android:maxLevel="2"/>
+    <item
+        android:drawable="@drawable/battery03"
+        android:maxLevel="3"/>
+    <item
+        android:drawable="@drawable/battery04"
+        android:maxLevel="4"/>
+    <item
+        android:drawable="@drawable/battery05"
+        android:maxLevel="5"/>
+</level-list>
