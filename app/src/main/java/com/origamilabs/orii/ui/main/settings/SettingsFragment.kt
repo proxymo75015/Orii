@@ -18,7 +18,9 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
+import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import com.origamilabs.orii.R
 import com.origamilabs.orii.databinding.SettingsFragmentBinding
 import com.origamilabs.orii.manager.AppManager
@@ -28,8 +30,11 @@ import com.origamilabs.orii.ui.main.SharedViewModel
 import com.origamilabs.orii.ui.main.settings.dialog.CustomCommandDialogFragment
 import com.origamilabs.orii.ui.main.settings.dialog.WebHookUrlDialogFragment
 import com.origamilabs.orii.ui.main.settings.gesture.WebHookTutorialActivity
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import java.util.Locale
 
+@AndroidEntryPoint
 class SettingsFragment : Fragment() {
 
     companion object {
@@ -41,21 +46,22 @@ class SettingsFragment : Fragment() {
         fun newInstance(): SettingsFragment = SettingsFragment()
     }
 
-    private lateinit var binding: SettingsFragmentBinding
-    private lateinit var settingsViewModel: SettingsViewModel
-    private lateinit var sharedViewModel: SharedViewModel
+    private var _binding: SettingsFragmentBinding? = null
+    private val binding get() = _binding!!
+
+    // Injection des ViewModels via Hilt
+    private val settingsViewModel: SettingsViewModel by viewModels()
+    private val sharedViewModel: SharedViewModel by activityViewModels()
+
     private lateinit var tts: TextToSpeech
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Initialisation de TextToSpeech avec la langue française
         tts = TextToSpeech(context) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                var locale = Locale.getDefault()
-                if (locale.language.equals("zh", ignoreCase = true) &&
-                    locale.country.equals("HK", ignoreCase = true)
-                ) {
-                    locale = Locale("yue", "HK")
-                }
+                // Forcer la langue en français
+                val locale = Locale("fr", "FR")
                 Log.d(TAG, "Selected language: $locale")
                 tts.language = locale
             }
@@ -67,16 +73,15 @@ class SettingsFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = DataBindingUtil.inflate(inflater, R.layout.settings_fragment, container, false)
+        _binding = DataBindingUtil.inflate(inflater, R.layout.settings_fragment, container, false)
         return binding.root
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        binding.lifecycleOwner = this
-        settingsViewModel = ViewModelProvider(this).get(SettingsViewModel::class.java)
+    // Utilisation de onViewCreated au lieu de onActivityCreated (déprécié)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        binding.lifecycleOwner = viewLifecycleOwner
         binding.settingsViewModel = settingsViewModel
-        sharedViewModel = ViewModelProvider(requireActivity()).get(SharedViewModel::class.java)
         binding.sharedViewModel = sharedViewModel
 
         initView()
@@ -89,8 +94,13 @@ class SettingsFragment : Fragment() {
         tts.stop()
     }
 
-    override fun onDetach() {
-        super.onDetach()
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         tts.shutdown()
     }
 
@@ -130,7 +140,10 @@ class SettingsFragment : Fragment() {
                     val speed = (progress + 5) / 10.0f
                     settingsViewModel.saveReadoutSpeedToPreferences(speed)
                     tts.setSpeechRate(speed)
-                    tts.speak(getString(R.string.tts_test_message), TextToSpeech.QUEUE_FLUSH, null, null)
+                    // Exemple d'utilisation d'une coroutine pour lancer la parole
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        tts.speak(getString(R.string.tts_test_message), TextToSpeech.QUEUE_FLUSH, null, null)
+                    }
                 }
             }
         })
@@ -146,7 +159,7 @@ class SettingsFragment : Fragment() {
         binding.root.findViewById<AppCompatCheckBox>(R.id.gestures_controller_check_box)
             .setOnClickListener { view ->
                 val checkBox = view as? CheckBox
-                    ?: throw TypeCastException("La vue n'est pas un CheckBox")
+                    ?: throw TypeCastException("La vue n\'est pas un CheckBox")
                 setGlobalGestureMode(checkBox.isChecked)
                 changeGestureSwitchCheck(checkBox.isChecked)
             }
@@ -232,8 +245,16 @@ class SettingsFragment : Fragment() {
             })
     }
 
+    /**
+     * Gestion du onTouch pour appeler performClick() lors d'un tap et consommer l'événement MOVE.
+     */
     private fun cancelSwitchSwipeAction() {
-        val touchListener = View.OnTouchListener { _, event ->
+        val touchListener = View.OnTouchListener { view, event ->
+            if (event.actionMasked == MotionEvent.ACTION_UP) {
+                // Déclenche l'événement click pour l'accessibilité.
+                view.performClick()
+            }
+            // Consomme l'événement MOVE afin d'empêcher les gestes de swipe.
             event.actionMasked == MotionEvent.ACTION_MOVE
         }
         binding.root.findViewById<SwitchCompat>(R.id.gesture_up_double_tap_switch)
