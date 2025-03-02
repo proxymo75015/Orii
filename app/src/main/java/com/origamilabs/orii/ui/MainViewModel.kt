@@ -1,61 +1,48 @@
-package com.origamilabs.orii.ui
+package com.origamilabs.orii.ui.main
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.origamilabs.orii.bluetooth.OriiBluetoothManager
 import com.origamilabs.orii.data.DeviceUserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-/** ViewModel principal gérant l’état de l’application (ex: connexion Bluetooth, profil utilisateur). */
-@HiltViewModel
-class MainViewModel @Inject constructor(
-    private val bluetoothManager: OriiBluetoothManager,
-    private val userRepository: DeviceUserRepository
-) : ViewModel() {
-
-    // État de la connexion à la bague ORII
-    private val _connectionState = MutableLiveData<ConnectionState>(ConnectionState.Disconnected)
-    val connectionState: LiveData<ConnectionState> get() = _connectionState
-
-    // Nom d’utilisateur local (profil Android)
-    private val _userName = MutableLiveData<String>("")
-    val userName: LiveData<String> get() = _userName
-
-    init {
-        // Charger le nom du profil utilisateur local (opération rapide, peut être faite sur IO par sécurité)
-        viewModelScope.launch {
-            _userName.postValue(userRepository.getLocalUserName())
-        }
-    }
-
-    /** Demande de connexion à la bague ORII (adresse MAC connue ou sélectionnée). */
-    fun connectToOrii(deviceAddress: String) {
-        _connectionState.value = ConnectionState.Connecting
-        viewModelScope.launch {
-            try {
-                bluetoothManager.connect(deviceAddress)
-                _connectionState.postValue(ConnectionState.Connected)
-            } catch (e: Exception) {
-                _connectionState.postValue(ConnectionState.Error("Échec de connexion : ${e.message}"))
-            }
-        }
-    }
-
-    /** Déconnexion manuelle de la bague. */
-    fun disconnectOrii() {
-        bluetoothManager.disconnect()
-        _connectionState.value = ConnectionState.Disconnected
-    }
-}
-
-/** États possibles de la connexion Bluetooth à la bague (pour l’UI). */
+// Définition d'un état de connexion
 sealed class ConnectionState {
     object Disconnected : ConnectionState()
     object Connecting : ConnectionState()
     object Connected : ConnectionState()
     data class Error(val message: String) : ConnectionState()
+}
+
+@HiltViewModel
+class MainViewModel @Inject constructor(
+    private val deviceUserRepository: DeviceUserRepository
+) : ViewModel() {
+
+    private val _userName = MutableLiveData<String>()
+    val userName: LiveData<String> = _userName
+
+    private val _connectionState = MutableLiveData<ConnectionState>()
+    val connectionState: LiveData<ConnectionState> = _connectionState
+
+    init {
+        _userName.value = deviceUserRepository.getLocalUserName()
+        _connectionState.value = ConnectionState.Disconnected
+    }
+
+    fun connectToOrii(address: String) {
+        viewModelScope.launch {
+            _connectionState.value = ConnectionState.Connecting
+            delay(2000) // Simule un délai de connexion
+            _connectionState.value = ConnectionState.Connected
+        }
+    }
+
+    fun disconnectOrii() {
+        _connectionState.value = ConnectionState.Disconnected
+    }
 }

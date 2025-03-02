@@ -614,4 +614,9 @@ Veuillez le charger avant de réessayer</string>
     <string name="update_updating_status_progress">%1$s terminé</string>
     <string name="update_updating_status_restarting">Redémarrage…</string>
     <string name="update_updating_status_success">Succès</string>
+    <string name="welcome_user">Bonjour, %1$s!</string>
+    <string name="status_disconnected">Déconnecté</string>
+    <string name="status_connecting">Connexion en cours…</string>
+    <string name="status_connected">Connecté</string>
+    <string name="status_error">Erreur : %1$s</string>
 </resources>

@@ -1,11 +1,9 @@
 <manifest package="com.origamilabs.orii" xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Permissions nécessaires (Bluetooth, etc.) -->
+    <!-- Permissions nécessaires -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
-    <!-- Si cible Android 12+ -->
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
-    <!-- Autres permissions éventuellement nécessaires -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -13,12 +11,10 @@
         android:name=".OriiApplication"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:allowBackup="true"
-        android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
-        <!-- MainActivity devient l’activité lancée au démarrage -->
-        <activity android:name=".ui.MainActivity"
+        <!-- MainActivity lancée au démarrage -->
+        <activity
+            android:name=".ui.MainActivity"
             android:exported="true"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -26,9 +22,5 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <!-- Autres activités/écrans de l’application (s’il y en a) -->
-        <!-- ... -->
-
     </application>
 </manifest>
