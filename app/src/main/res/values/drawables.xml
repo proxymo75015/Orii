@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <drawable name="notification_template_icon_bg">#3333b5e5</drawable>
-    <drawable name="notification_template_icon_low_bg">#0cffffff</drawable>
+    <!-- Couleur de fond de l'icône de notification -->
+    <color name="notification_template_icon_bg">#3333b5e5</color>
+    <!-- Couleur de fond de l'icône de notification en mode "low" -->
+    <color name="notification_template_icon_low_bg">#0cffffff</color>
 </resources>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Définition des pluriels pour la description du badge de notifications -->
     <plurals name="mtrl_badge_content_description">
         <item quantity="one">%d new notification</item>
         <item quantity="other">%d new notifications</item>

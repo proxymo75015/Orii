@@ -14,17 +14,11 @@ import com.facebook.FacebookCallback
 import com.facebook.FacebookException
 import com.facebook.login.LoginManager
 import com.facebook.login.LoginResult
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.auth.api.signin.*
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
 import com.google.android.material.tabs.TabLayout
-import com.google.firebase.auth.AuthCredential
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FacebookAuthProvider
-import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.*
 import com.google.firebase.messaging.FirebaseMessaging
 import com.origamilabs.orii.R
 import com.origamilabs.orii.databinding.MainActivityBinding
@@ -33,6 +27,7 @@ import com.origamilabs.orii.ui.main.alerts.AlertsFragment
 import com.origamilabs.orii.ui.main.help.HelpFragment
 import com.origamilabs.orii.ui.main.home.HomeFragment
 import com.origamilabs.orii.ui.main.home.update.reminder.ReminderFragment
+import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * Activité principale de l'application.
@@ -40,6 +35,7 @@ import com.origamilabs.orii.ui.main.home.update.reminder.ReminderFragment
  * Gère la navigation par onglets, l'authentification (Google et Facebook) et
  * l'initialisation de Firebase Cloud Messaging.
  */
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
     companion object {
@@ -81,7 +77,7 @@ class MainActivity : AppCompatActivity() {
                 "alerts" -> AlertsFragment.newInstance()
                 "help" -> HelpFragment.newInstance()
                 "home" -> HomeFragment.newInstance()
-                "settings" -> ReminderFragment.newInstance() // Utilisation de ReminderFragment pour "settings"
+                "settings" -> ReminderFragment.newInstance() // "settings" -> ReminderFragment
                 else -> HomeFragment.newInstance()
             }
             currentTabIndex = tab.position
@@ -106,7 +102,6 @@ class MainActivity : AppCompatActivity() {
         // Activation des vecteurs compatibles.
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
 
-        // Initialisations diverses.
         initTabs()
         initFirebaseMessaging()
         initGoogleSignIn()
@@ -172,9 +167,11 @@ class MainActivity : AppCompatActivity() {
                 override fun onSuccess(result: LoginResult) {
                     handleFacebookAccessToken(result.accessToken)
                 }
+
                 override fun onCancel() {
                     Log.d(TAG, "Connexion Facebook annulée.")
                 }
+
                 override fun onError(error: FacebookException) {
                     Log.e(TAG, "Erreur lors de la connexion Facebook : ${error.message}")
                 }

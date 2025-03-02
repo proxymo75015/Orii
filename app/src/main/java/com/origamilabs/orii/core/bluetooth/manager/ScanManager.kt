@@ -1,108 +1,90 @@
 package com.origamilabs.orii.core.bluetooth.manager
 
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
-import android.os.Handler
+import android.content.Context
 import android.util.Log
 import com.origamilabs.orii.core.bluetooth.BluetoothHelper
-import java.util.*
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlin.coroutines.resume
 
-object ScanManager : BaseManager() {
+@Singleton
+class ScanManager @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val bluetoothAdapter: BluetoothAdapter
+) {
 
-    private const val SCAN_PERIOD = 30000L
-    private const val TAG = "ScanManager"
+    private val TAG = "ScanManager"
+    private val scanPeriod = 30000L // 30 secondes
 
-    private var mListener: OnStateChangedListener? = null
-    private var mCurrentState: State = State.NONE
+    /**
+     * Lance le scan Bluetooth pour trouver un appareil ORII.
+     * Si un appareil pré-appairé est trouvé, il est retourné immédiatement.
+     * Sinon, un scan est effectué avec un timeout de 30 secondes.
+     *
+     * @return L'appareil Bluetooth trouvé ou null en cas de timeout.
+     */
+    suspend fun scanForOrii(): BluetoothDevice? {
+        // Vérifie si un appareil pré-appairé correspondant existe déjà
+        findBondedOrii()?.let {
+            Log.d(TAG, "Appareil pré-appairé trouvé: ${it.address}")
+            return it
+        }
 
-    // Handler pour les tâches temporisées
-    private val mHandler: Handler by lazy { Handler() }
+        // Lancement du scan avec un timeout
+        return withTimeoutOrNull(scanPeriod) {
+            suspendCancellableCoroutine<BluetoothDevice> { cont ->
+                val scanCallback = object : ScanCallback() {
+                    override fun onScanResult(callbackType: Int, result: ScanResult) {
+                        super.onScanResult(callbackType, result)
+                        val device = result.device
+                        Log.d(TAG, "Appareil scanné: ${result.scanRecord?.deviceName}:${device.address}")
+                        if (BluetoothHelper.isOriiMacAddressInRange(device.address)) {
+                            Log.d(TAG, "Appareil ORII trouvé")
+                            bluetoothAdapter.bluetoothLeScanner?.stopScan(this)
+                            if (cont.isActive) {
+                                cont.resume(device)
+                            }
+                        }
+                    }
 
-    // Callback de scan Bluetooth LE
-    private val mScanCallback = object : ScanCallback() {
-        override fun onScanResult(callbackType: Int, result: ScanResult) {
-            super.onScanResult(callbackType, result)
-            Log.d(TAG, "Scanned device: ${result.scanRecord?.deviceName}:${result.device.address}")
-            if (BluetoothHelper.isOriiMacAddressInRange(result.device.address)) {
-                mCurrentState = State.READY_TO_SCAN
-                Log.d(TAG, "Found ORII")
-                getBluetoothAdapter()?.bluetoothLeScanner?.stopScan(this)
-                mListener?.onOriiFound(result.device)
+                    override fun onScanFailed(errorCode: Int) {
+                        super.onScanFailed(errorCode)
+                        if (cont.isActive) {
+                            cont.resumeWithException(RuntimeException("Échec du scan avec le code d'erreur $errorCode"))
+                        }
+                    }
+                }
+
+                bluetoothAdapter.bluetoothLeScanner?.startScan(
+                    null,
+                    ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_POWER).build(),
+                    scanCallback
+                )
+
+                // Arrêter le scan si la coroutine est annulée
+                cont.invokeOnCancellation {
+                    bluetoothAdapter.bluetoothLeScanner?.stopScan(scanCallback)
+                }
             }
         }
     }
 
-    interface OnStateChangedListener {
-        fun onOriiFound(device: BluetoothDevice)
-        fun onScanTimeout()
-    }
-
-    enum class State {
-        READY_TO_SCAN,
-        SCANNING,
-        NONE
-    }
-
-    override fun onInitialize(): Boolean {
-        mCurrentState = State.READY_TO_SCAN
-        return true
-    }
-
-    override fun start() {
-        if (mCurrentState == State.NONE) {
-            throw RuntimeException("You have to initialize the ScanManager before calling start().")
-        }
-        val bondedOrii = findBondedOrii()
-        if (bondedOrii == null) {
-            mCurrentState = State.SCANNING
-            scan()
-        } else {
-            mCurrentState = State.READY_TO_SCAN
-            mListener?.onOriiFound(bondedOrii)
-        }
-    }
-
-    override fun close() {
-        stop()
-    }
-
-    fun stop() {
-        getBluetoothAdapter()?.bluetoothLeScanner?.stopScan(mScanCallback)
-    }
-
-    fun setOnStateChangedListener(listener: OnStateChangedListener) {
-        mListener = listener
-    }
-
-    private class ScanTimeoutRunnable : Runnable {
-        override fun run() {
-            if (mContext == null || ScanManager.mCurrentState != State.SCANNING) return
-            mCurrentState = State.READY_TO_SCAN
-            getBluetoothAdapter()?.bluetoothLeScanner?.stopScan(ScanManager.mScanCallback)
-            mListener?.onScanTimeout()
-        }
-    }
-
-    private fun scan() {
-        mHandler.postDelayed(ScanTimeoutRunnable(), SCAN_PERIOD)
-        getBluetoothAdapter()?.bluetoothLeScanner?.startScan(
-            /* filters = */ null,
-            ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_POWER).build(),
-            mScanCallback
-        )
-    }
-
+    /**
+     * Recherche parmi les appareils appairés un appareil correspondant aux critères ORII.
+     */
     private fun findBondedOrii(): BluetoothDevice? {
-        val bondedDevices = getBluetoothAdapter()?.bondedDevices ?: emptySet()
-        Log.d(TAG, "Bonded Devices size: ${bondedDevices.size}")
-        for (device in bondedDevices) {
-            if (BluetoothHelper.isOriiMacAddressInRange(device.address)) {
-                return device
-            }
+        val bondedDevices = bluetoothAdapter.bondedDevices ?: emptySet()
+        Log.d(TAG, "Nombre d'appareils appairés: ${bondedDevices.size}")
+        return bondedDevices.firstOrNull { device ->
+            BluetoothHelper.isOriiMacAddressInRange(device.address)
         }
-        return null
     }
 }

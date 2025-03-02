@@ -5,15 +5,14 @@ import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
 import android.util.Log
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.*
+import javax.inject.Inject
 import com.origamilabs.orii.core.bluetooth.manager.ConnectionManager
 import com.origamilabs.orii.core.bluetooth.manager.RouteManager
 import com.origamilabs.orii.core.bluetooth.manager.ScanManager
 
-/**
- * Service Bluetooth permettant d'initialiser et de gérer les managers Bluetooth.
- *
- * Ce service renvoie un binder permettant à d'autres composants de récupérer l'instance de ce service.
- */
+@AndroidEntryPoint
 class BluetoothService : Service() {
 
     companion object {
@@ -23,33 +22,50 @@ class BluetoothService : Service() {
     // Binder pour lier le service à un client
     private val mBinder = LocalBinder()
 
+    // Scope dédié aux opérations asynchrones du service.
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    // Injection des managers via Hilt
+    @Inject lateinit var scanManager: ScanManager
+    @Inject lateinit var connectionManager: ConnectionManager
+    @Inject lateinit var routeManager: RouteManager
+
     override fun onCreate() {
         super.onCreate()
-        // Initialisation spécifique si nécessaire
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        // Libération des ressources si nécessaire
+        Log.d(TAG, "Service créé")
     }
 
     override fun onBind(intent: Intent?): IBinder {
         Log.d(TAG, "onBind")
-        // Initialisation des managers si ce n'est pas déjà fait
-        if (!ScanManager.getInstance().isInitialized()) {
-            ScanManager.getInstance().initialize(this)
-        }
-        if (!ConnectionManager.getInstance().isInitialized()) {
-            ConnectionManager.getInstance().initialize(this)
-        }
-        if (!RouteManager.getInstance().isInitialized()) {
-            RouteManager.getInstance().initialize(this)
+        // Lancement d'une coroutine pour initialiser les managers de manière asynchrone
+        serviceScope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    if (!scanManager.isInitialized()) {
+                        scanManager.initialize(this@BluetoothService)
+                    }
+                    if (!connectionManager.isInitialized()) {
+                        connectionManager.initialize(this@BluetoothService)
+                    }
+                    if (!routeManager.isInitialized()) {
+                        routeManager.initialize(this@BluetoothService)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Erreur lors de l'initialisation des managers", e)
+                }
+            }
         }
         return mBinder
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
         return super.onUnbind(intent)
+    }
+
+    override fun onDestroy() {
+        serviceScope.cancel() // Annule les tâches asynchrones en cours
+        super.onDestroy()
+        Log.d(TAG, "Service détruit")
     }
 
     /**

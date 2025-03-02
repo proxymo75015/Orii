@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     app:startDestination="@id/homeFragment">
 
+    <!-- Page principale de l’application -->
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.origamilabs.orii.ui.main.home.HomeFragment"
-        android:label="Home" />
+        android:name="com.origamilabs.orii.ui.HomeFragment"
+        android_label="@string/title_home"
+        tools:layout="@layout/fragment_home" />
 
-    <fragment
-        android:id="@+id/settingsFragment"
-        android:name="com.origamilabs.orii.ui.main.settings.SettingsFragment"
-        android:label="Settings" />
+    <!-- (Autres destinations de l’application, par ex. réglages, etc.) -->
+    <!-- ... -->
 
+    <!-- L’écran de login a été supprimé du graphe de navigation -->
 </navigation>

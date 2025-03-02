@@ -1,6 +1,11 @@
 package com.origamilabs.orii.core.bluetooth.manager
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.bluetooth.BluetoothA2dp
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothHeadset
 import android.bluetooth.BluetoothProfile
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -9,8 +14,6 @@ import android.content.IntentFilter
 import android.media.AudioManager
 import android.media.MediaRouter
 import android.os.Build
-import android.os.Handler
-import android.os.HandlerThread
 import android.os.ParcelUuid
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -20,93 +23,111 @@ import com.origamilabs.orii.core.R
 import com.origamilabs.orii.core.bluetooth.BluetoothHelper
 import com.origamilabs.orii.core.bluetooth.connection.A2dpHandler
 import com.origamilabs.orii.core.bluetooth.connection.HeadsetHandler
-import com.origamilabs.orii.core.bluetooth.connection.ScanManager
 import com.origamilabs.orii.core.bluetooth.connection.GattHandler
-import java.util.*
-import kotlin.collections.HashSet
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.*
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object RouteManager : BaseManager() {
+@Singleton
+class RouteManager @Inject constructor(
+    @ApplicationContext private val context: Context
+) : BaseManager() {
 
-    private const val TAG = "RouteManager"
-    private const val TRIGGER_INTERVAL = AbstractSpiCall.DEFAULT_TIMEOUT
-    private const val RECONNECTED_INTERVAL = 200
+    companion object {
+        private const val TAG = "RouteManager"
+        private const val TRIGGER_INTERVAL: Long = 10_000L // 10 secondes
+        private const val RECONNECTED_INTERVAL: Long = 200L
+        private const val CONNECTION_TIMEOUT: Long = 180_000L // 3 minutes
+    }
 
-    private var mA2dpProfile: BluetoothProfile? = null
-    private var mHeadsetProfile: BluetoothProfile? = null
-    private var mMediaRouter: MediaRouter? = null
+    // Scope dédié pour les coroutines du manager
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    private var mHandler: Handler? = null
-    private var mHandlerThread: HandlerThread? = null
+    // Jobs pour la mise à jour périodique et la vérification de connexion
+    private var updateJob: Job? = null
+    private var checkConnectionJob: Job? = null
 
-    // Références aux gestionnaires de profils classiques
-    private var mHeadsetHandler: HeadsetHandler? = null
-    private var mA2dpHandler: A2dpHandler? = null
-    private var mGattHandler: GattHandler? = null
+    private var a2dpProfile: BluetoothProfile? = null
+    private var headsetProfile: BluetoothProfile? = null
+    private var mediaRouter: MediaRouter? =
+        context.getSystemService(Context.MEDIA_ROUTER_SERVICE) as? MediaRouter
 
-    // La classe d'intent pour la notification (optionnelle)
-    private var mIntentClass: Class<*>? = null
+    // Références aux gestionnaires de profils (à injecter ou initialiser selon votre architecture)
+    private var headsetHandler: HeadsetHandler? = null
+    private var a2dpHandler: A2dpHandler? = null
+    private var gattHandler: GattHandler? = null
 
-    private var mCallTimer: Timer? = null
-    private var mCurrentState: Int = 0
-    private var mDevice: BluetoothDevice? = null
-    private var mDeviceBonded: Boolean = false
+    // Classe d'intent pour la notification (optionnelle)
+    private var intentClass: Class<*>? = null
+
+    private var currentState: Int = 0
+    private var device: BluetoothDevice? = null
+    private var deviceBonded: Boolean = false
 
     // Liste des callbacks enregistrés
-    private val mCallbacks = mutableListOf<Callback?>()
+    private val callbacks = mutableListOf<Callback?>()
 
     // Indique si une reconnexion est en cours
+    @Volatile
     private var isReconnecting = false
 
-    // Runnable déclenché périodiquement pour mettre à jour la route audio
-    private val mHandlerRunnable = object : Runnable {
-        override fun run() {
-            updateAudioRoute()
-            mHandler?.postDelayed(this, TRIGGER_INTERVAL.toLong())
-        }
-    }
-
     // Service listeners pour les profils Headset et A2DP
-    private val mHeadsetServiceListener = object : BluetoothProfile.ServiceListener {
+    private val headsetServiceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, bluetoothProfile: BluetoothProfile?) {
-            mHeadsetProfile = bluetoothProfile
+            headsetProfile = bluetoothProfile
         }
-
         override fun onServiceDisconnected(profile: Int) {
-            mHeadsetProfile = null
+            headsetProfile = null
         }
     }
-
-    private val mA2dpServiceListener = object : BluetoothProfile.ServiceListener {
+    private val a2dpServiceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, bluetoothProfile: BluetoothProfile?) {
-            mA2dpProfile = bluetoothProfile
+            a2dpProfile = bluetoothProfile
         }
-
         override fun onServiceDisconnected(profile: Int) {
-            // Note : Dans le code Java original, on met mHeadsetProfile à null ici – vérifiez si cela est voulu.
-            mHeadsetProfile = null
+            // Dans le code original, on met headsetProfile à null ici – vérifiez si c'est voulu.
+            headsetProfile = null
         }
     }
 
     // Récepteur pour l'état du casque (plug/unplug)
-    private val mHeadsetPlugStateReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val audioManager = mContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-            // ServerProtocol.DIALOG_PARAM_STATE et AppEventsConstants.EVENT_PARAM_VALUE_NO proviennent des libs Facebook
+    private val headsetPlugStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(ctx: Context?, intent: Intent?) {
+            val audioManager = ctx?.getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return
             if (intent?.extras?.get("state") == "0") {
-                audioManager.setBluetoothScoOn(true)
+                audioManager.isBluetoothScoOn = true
             } else {
-                audioManager.setBluetoothScoOn(false)
+                audioManager.isBluetoothScoOn = false
             }
         }
     }
 
-    // Callback utilisé par ConnectionManager
-    private val mBtStateChangeReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            if (intent?.action == "android.bluetooth.adapter.action.STATE_CHANGED" &&
-                intent.getIntExtra("android.bluetooth.adapter.extra.STATE", -1) == 10
+    // Récepteur pour les changements d'état de l'adaptateur Bluetooth
+    private val btStateChangeReceiver = object : BroadcastReceiver() {
+        override fun onReceive(ctx: Context?, intent: Intent?) {
+            if (intent?.action == BluetoothAdapter.ACTION_STATE_CHANGED &&
+                intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, -1) == BluetoothAdapter.STATE_OFF
             ) {
                 stopForegroundForConnection()
+            }
+        }
+    }
+
+    // Récepteur pour les changements d'état de liaison d'un appareil
+    private val bondStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(ctx: Context?, intent: Intent?) {
+            val device = intent?.getParcelableExtra<BluetoothDevice>("android.bluetooth.device.extra.DEVICE")
+            if (device == null || !BluetoothHelper.isOriiMacAddressInRange(device.address)) return
+            val bondState = intent.getIntExtra("android.bluetooth.device.extra.BOND_STATE", -1)
+            Log.d(TAG, "Bond state changed: ${intent.getIntExtra("android.bluetooth.device.extra.PREVIOUS_BOND_STATE", -1)} => $bondState")
+            Log.d(TAG, "Device bond state: ${device.bondState}")
+            when (bondState) {
+                BluetoothDevice.BOND_NONE, BluetoothDevice.BOND_BONDING -> deviceBonded = false
+                BluetoothDevice.BOND_BONDED -> {
+                    deviceBonded = true
+                    connectClassic()
+                }
             }
         }
     }
@@ -120,49 +141,30 @@ object RouteManager : BaseManager() {
     }
 
     override fun onInitialize(): Boolean {
-        BluetoothHelper.getBluetoothAdapter(mContext).getProfileProxy(mContext, mHeadsetServiceListener, BluetoothProfile.HEADSET)
-        BluetoothHelper.getBluetoothAdapter(mContext).getProfileProxy(mContext, mA2dpServiceListener, BluetoothProfile.A2DP)
-        mMediaRouter = mContext.getSystemService(Context.MEDIA_ROUTER_SERVICE) as MediaRouter?
-        mHandlerThread = HandlerThread(TAG).apply { start() }
-        mHandler = Handler(mHandlerThread!!.looper)
-        mContext.registerReceiver(mHeadsetPlugStateReceiver, IntentFilter("android.intent.action.HEADSET_PLUG"))
-        (mContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager).setBluetoothScoOn(true)
-        mContext.registerReceiver(mBtStateChangeReceiver, IntentFilter("android.bluetooth.adapter.action.STATE_CHANGED"))
-        mContext.registerReceiver(mBondStateReceiver, IntentFilter("android.bluetooth.device.action.BOND_STATE_CHANGED"))
+        val bluetoothAdapter = BluetoothHelper.getBluetoothAdapter(context)
+        bluetoothAdapter?.getProfileProxy(context, headsetServiceListener, BluetoothProfile.HEADSET)
+        bluetoothAdapter?.getProfileProxy(context, a2dpServiceListener, BluetoothProfile.A2DP)
+        context.registerReceiver(headsetPlugStateReceiver, IntentFilter("android.intent.action.HEADSET_PLUG"))
+        (context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager)?.isBluetoothScoOn = true
+        context.registerReceiver(btStateChangeReceiver, IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED))
+        context.registerReceiver(bondStateReceiver, IntentFilter("android.bluetooth.device.action.BOND_STATE_CHANGED"))
         return true
     }
 
-    // Récepteur pour les changements d'état de liaison du device
-    private val mBondStateReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val device = intent?.getParcelableExtra<BluetoothDevice>("android.bluetooth.device.extra.DEVICE")
-            if (device == null || !BluetoothHelper.isOriiMacAddressInRange(device.address)) return
-            val bondState = intent.getIntExtra("android.bluetooth.device.extra.BOND_STATE", -1)
-            Log.d(
-                TAG,
-                String.format(
-                    "Bond state changed: %s => %s",
-                    intent.getIntExtra("android.bluetooth.device.extra.PREVIOUS_BOND_STATE", -1),
-                    bondState
-                )
-            )
-            Log.d(TAG, "mDevice bind state: ${device.bondState}")
-            when (bondState) {
-                10, 11 -> mDeviceBonded = false
-                12 -> {
-                    mDeviceBonded = true
-                    connectClassic()
-                }
+    override fun start() {
+        // Lancement d'une coroutine pour mettre à jour périodiquement la route audio.
+        updateJob = scope.launch {
+            while (isActive) {
+                updateAudioRoute()
+                delay(TRIGGER_INTERVAL)
             }
         }
     }
 
-    override fun start() {
-        mHandler?.postDelayed(mHandlerRunnable, TRIGGER_INTERVAL.toLong())
-    }
-
     override fun close() {
-        mHandler?.removeCallbacksAndMessages(null)
+        updateJob?.cancel()
+        checkConnectionJob?.cancel()
+        scope.cancel()
     }
 
     @Synchronized
@@ -178,11 +180,12 @@ object RouteManager : BaseManager() {
                     isReconnecting = true
                     disconnectA2dp(device)
                     disconnectHeadset(device)
-                    mHandler?.postDelayed({
+                    scope.launch {
+                        delay(RECONNECTED_INTERVAL)
                         connectA2dp(device)
                         connectHeadset(device)
                         isReconnecting = false
-                    }, RECONNECTED_INTERVAL.toLong())
+                    }
                 }
             } else if (connectedAudioDevices.size == 1 && isPhoneAudioRouteName(currentAudioRouteName)) {
                 if (BluetoothHelper.isOriiMacAddressInRange(device.address)) {
@@ -191,39 +194,41 @@ object RouteManager : BaseManager() {
                     isReconnecting = true
                     disconnectA2dp(device)
                     disconnectHeadset(device)
-                    mHandler?.postDelayed({
+                    scope.launch {
+                        delay(RECONNECTED_INTERVAL)
                         connectA2dp(device)
                         connectHeadset(device)
                         isReconnecting = false
-                    }, RECONNECTED_INTERVAL.toLong())
+                    }
                 }
             }
         }
     }
 
     private fun getConnectedAudioDevices(): Set<BluetoothDevice>? {
-        val bondedDevices = getBluetoothAdapter()?.bondedDevices ?: return null
-        val result = HashSet<BluetoothDevice>()
-        if (getBluetoothAdapter() == null || !getBluetoothAdapter()!!.isEnabled) return null
+        val bluetoothAdapter = BluetoothHelper.getBluetoothAdapter(context) ?: return null
+        val bondedDevices = bluetoothAdapter.bondedDevices ?: return null
+        val result = mutableSetOf<BluetoothDevice>()
+        if (!bluetoothAdapter.isEnabled) return null
 
-        if (mHeadsetProfile == null) {
-            BluetoothHelper.getBluetoothAdapter(mContext).getProfileProxy(mContext, mHeadsetServiceListener, BluetoothProfile.HEADSET)
+        if (headsetProfile == null) {
+            bluetoothAdapter.getProfileProxy(context, headsetServiceListener, BluetoothProfile.HEADSET)
             return null
         }
-        if (mA2dpProfile == null) {
-            BluetoothHelper.getBluetoothAdapter(mContext).getProfileProxy(mContext, mA2dpServiceListener, BluetoothProfile.A2DP)
+        if (a2dpProfile == null) {
+            bluetoothAdapter.getProfileProxy(context, a2dpServiceListener, BluetoothProfile.A2DP)
             return null
         }
         for (device in bondedDevices) {
             if (device.bondState != BluetoothDevice.BOND_BONDED) continue
             val uuids = device.uuids
             if (uuids != null && containsAnyUuid(uuids, Constants.HEADSET_PROFILE_UUIDS) &&
-                mHeadsetProfile?.getConnectionState(device) == BluetoothProfile.STATE_CONNECTED
+                headsetProfile?.getConnectionState(device) == BluetoothProfile.STATE_CONNECTED
             ) {
                 result.add(device)
             }
             if (uuids != null && containsAnyUuid(uuids, Constants.A2DP_SINK_PROFILE_UUIDS) &&
-                mA2dpProfile?.getConnectionState(device) == BluetoothProfile.STATE_CONNECTED
+                a2dpProfile?.getConnectionState(device) == BluetoothProfile.STATE_CONNECTED
             ) {
                 result.add(device)
             }
@@ -232,7 +237,7 @@ object RouteManager : BaseManager() {
     }
 
     private fun getCurrentAudioRouteName(): String {
-        return mMediaRouter?.selectedRoute(MediaRouter.ROUTE_TYPE_LIVE_AUDIO)?.name?.toString() ?: ""
+        return mediaRouter?.selectedRoute(MediaRouter.ROUTE_TYPE_LIVE_AUDIO)?.name?.toString() ?: ""
     }
 
     private fun isOriiAudioRouteName(routeName: String): Boolean {
@@ -252,9 +257,9 @@ object RouteManager : BaseManager() {
         try {
             val method = BluetoothHeadset::class.java.getMethod("disconnect", BluetoothDevice::class.java)
             method.isAccessible = true
-            method.invoke(mHeadsetProfile, device)
+            method.invoke(headsetProfile, device)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error disconnecting headset", e)
         }
     }
 
@@ -262,9 +267,9 @@ object RouteManager : BaseManager() {
         try {
             val method = BluetoothHeadset::class.java.getMethod("connect", BluetoothDevice::class.java)
             method.isAccessible = true
-            method.invoke(mHeadsetProfile, device)
+            method.invoke(headsetProfile, device)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error connecting headset", e)
         }
     }
 
@@ -272,9 +277,9 @@ object RouteManager : BaseManager() {
         try {
             val method = BluetoothA2dp::class.java.getMethod("disconnect", BluetoothDevice::class.java)
             method.isAccessible = true
-            method.invoke(mA2dpProfile, device)
+            method.invoke(a2dpProfile, device)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error disconnecting A2DP", e)
         }
     }
 
@@ -282,55 +287,60 @@ object RouteManager : BaseManager() {
         try {
             val method = BluetoothA2dp::class.java.getMethod("connect", BluetoothDevice::class.java)
             method.isAccessible = true
-            method.invoke(mA2dpProfile, device)
+            method.invoke(a2dpProfile, device)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Error connecting A2DP", e)
         }
     }
 
     fun stopSearch() {
-        mHandler?.post {
+        scope.launch {
             close()
             ScanManager.instance.close()
             CommandManager.instance.close()
-            RouteManager.stopForegroundForConnection()
+            stopForegroundForConnection()
         }
     }
 
     @Synchronized
     fun updateNotificationBatteryLevel(level: Int) {
         updateNotification(
-            mContext.getString(R.string.notification_title_connected),
-            mContext.getString(R.string.notification_text_battery_level) + (level * 20) + "%"
+            context.getString(R.string.notification_title_connected),
+            context.getString(R.string.notification_text_battery_level) + (level * 20) + "%"
         )
     }
 
     private fun updateNotification(title: String, content: String) {
-        val nm = mContext.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+        val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
         nm?.notify(Constants.ORII_NOTIFICATION_CONNECTION_STATE, setNotification(title, content).build())
     }
 
     private fun setNotification(title: String, content: String): NotificationCompat.Builder {
-        val channelId = mContext.getString(R.string.notification_connection_channel_id)
-        val builder = NotificationCompat.Builder(mContext, channelId)
+        val channelId = context.getString(R.string.notification_connection_channel_id)
+        val builder = NotificationCompat.Builder(context, channelId)
             .setSmallIcon(R.drawable.ic_statusbar)
             .setContentTitle(title)
             .setContentText(content)
             .setOngoing(true)
             .setShowWhen(false)
-        mIntentClass?.let { cls ->
-            val intent = Intent(mContext, cls)
-            val stackBuilder = TaskStackBuilder.create(mContext)
+        intentClass?.let { cls ->
+            val intent = Intent(context, cls)
+            val stackBuilder = TaskStackBuilder.create(context)
             stackBuilder.addParentStack(cls)
             stackBuilder.addNextIntent(intent)
-            builder.setContentIntent(stackBuilder.getPendingIntent(Constants.ORII_NOTIFICATION_CONNECTION_STATE, 134217728))
+            builder.setContentIntent(
+                stackBuilder.getPendingIntent(
+                    Constants.ORII_NOTIFICATION_CONNECTION_STATE,
+                    NotificationCompat.FLAG_UPDATE_CURRENT
+                )
+            )
         }
-        if (Build.VERSION.SDK_INT >= 26) {
-            val nm = mContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            nm.createNotificationChannel(
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            nm?.createNotificationChannel(
                 NotificationChannel(
                     channelId,
-                    mContext.getString(R.string.notification_connection_channel_name),
+                    context.getString(R.string.notification_connection_channel_name),
                     NotificationManager.IMPORTANCE_LOW
                 )
             )
@@ -340,56 +350,55 @@ object RouteManager : BaseManager() {
 
     fun stopForegroundForConnection() {
         Log.d(TAG, "stopForegroundForConnection")
-        mBluetoothService.stopForeground(true)
+        // Supposons que bluetoothService est fourni par BaseManager ou via injection.
+        bluetoothService?.stopForeground(true)
     }
 
     private fun startCheckConnectionTimerTask() {
-        mCallTimer?.cancel()
-        mCallTimer?.purge()
-        mCallTimer = null
-        mCallTimer = Timer()
-        mCallTimer?.schedule(180000L) {
-            if (mCurrentState != 2) {
+        checkConnectionJob?.cancel()
+        checkConnectionJob = scope.launch {
+            delay(CONNECTION_TIMEOUT)
+            if (currentState != ConnectionHandler.STATE_CONNECTED) {
                 stopSearch()
             }
         }
     }
 
-    fun getConnectionState(): Int = mCurrentState
+    fun getConnectionState(): Int = currentState
 
-    fun getOriiAddress(): String = mDevice?.address ?: ""
+    fun getOriiAddress(): String = device?.address ?: ""
 
     fun setNotificationIntentClass(cls: Class<*>) {
-        mIntentClass = cls
+        intentClass = cls
     }
 
-    // Méthode de mise à jour de l'état de la connexion
     @Synchronized
     fun updateConnectionState() {
-        val headsetState = mHeadsetHandler?.currentState ?: 0
-        val a2dpState = mA2dpHandler?.currentState ?: 0
-        var gattState = mGattHandler?.currentState ?: 0
-        Log.d(TAG, "updateConnectionState()-headsetState:$headsetState")
-        Log.d(TAG, "updateConnectionState()-a2dpState:$a2dpState")
-        Log.d(TAG, "updateConnectionState()-gattState:$gattState")
+        val headsetState = headsetHandler?.currentState ?: 0
+        val a2dpState = a2dpHandler?.currentState ?: 0
+        var gattState = gattHandler?.currentState ?: 0
+        Log.d(TAG, "updateConnectionState()-headsetState: $headsetState")
+        Log.d(TAG, "updateConnectionState()-a2dpState: $a2dpState")
+        Log.d(TAG, "updateConnectionState()-gattState: $gattState")
 
         if (headsetState == BluetoothProfile.STATE_CONNECTED &&
             a2dpState == BluetoothProfile.STATE_CONNECTED && gattState == 0
         ) {
-            Log.d(TAG, "updateConnectionState()- device: ${mDevice?.name}")
-            Log.d(TAG, "updateConnectionState()- isConnecting(): ${mGattHandler?.isConnecting() ?: false}")
-            Log.d(TAG, "updateConnectionState()- isConnectingGatt(): ${mGattHandler?.isConnectingGatt() ?: false}")
-            Log.d(TAG, "updateConnectionState()- deviceBondState(): ${mDevice?.bondState}")
-            if (mDevice != null && !(mGattHandler?.isConnecting() ?: false)
-                && !(mGattHandler?.isConnected() ?: false)
-                && !(mGattHandler?.isConnectingGatt() ?: false)
-                && !(mGattHandler?.isClosingGatt() ?: false)
+            Log.d(TAG, "updateConnectionState()- device: ${device?.name}")
+            Log.d(TAG, "updateConnectionState()- isConnecting(): ${gattHandler?.isConnecting() ?: false}")
+            Log.d(TAG, "updateConnectionState()- isConnectingGatt(): ${gattHandler?.isConnectingGatt() ?: false}")
+            Log.d(TAG, "updateConnectionState()- deviceBondState(): ${device?.bondState}")
+            if (device != null &&
+                !(gattHandler?.isConnecting() ?: false) &&
+                !(gattHandler?.isConnected() ?: false) &&
+                !(gattHandler?.isConnectingGatt() ?: false) &&
+                !(gattHandler?.isClosingGatt() ?: false)
             ) {
-                mGattHandler?.connect(mDevice)
+                gattHandler?.connect(device)
                 gattState = ConnectionHandler.STATE_CONNECTING
             }
         }
-        var newState = mCurrentState
+        var newState = currentState
         if (a2dpState == 0 || headsetState == 0) {
             connectClassic()
         }
@@ -406,18 +415,24 @@ object RouteManager : BaseManager() {
                 if (gattState != 0 && a2dpState != 0 && headsetState != 0) newState else 0
             } else 1
         }
-        Log.d(TAG, "Connection State: $mCurrentState => $newState")
-        if (newState != mCurrentState) {
+        Log.d(TAG, "Connection State: $currentState => $newState")
+        if (newState != currentState) {
             when (newState) {
-                ConnectionHandler.STATE_CONNECTED -> updateNotification(mContext.getString(R.string.notification_title_connected), "")
+                ConnectionHandler.STATE_CONNECTED ->
+                    updateNotification(context.getString(R.string.notification_title_connected), "")
                 ConnectionHandler.STATE_CONNECTING -> {
                     startForegroundForConnection()
                     startCheckConnectionTimerTask()
                 }
                 ConnectionHandler.STATE_DISCONNECTED -> stopForegroundForConnection()
             }
-            mCallbacks.forEach { it?.onOriiStateChange(mCurrentState, newState) }
-            mCurrentState = newState
+            callbacks.forEach { it?.onOriiStateChange(currentState, newState) }
+            currentState = newState
         }
+    }
+
+    // Méthode à implémenter pour la connexion Bluetooth classique.
+    private fun connectClassic() {
+        // Implémentez ici la logique de connexion en Bluetooth classique.
     }
 }

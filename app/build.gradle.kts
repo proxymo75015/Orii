@@ -1,11 +1,12 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("androidx.navigation.safeargs.kotlin") // Safe Args pour Navigation Component
-    id("com.google.gms.google-services")   // Firebase
-    id("com.google.firebase.crashlytics")  // Crashlytics
-    id("kotlin-kapt")                      // Pour DataBinding et Room
-    id("kotlin-parcelize")                 // Pour Parcelable dans Safe Args
+    id("androidx.navigation.safeargs.kotlin")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
+    id("kotlin-parcelize")
+    id("com.google.devtools.ksp") version "1.9.0-1.0.12"
+    id("com.google.dagger.hilt.android") version "2.48"
 }
 
 android {
@@ -14,85 +15,90 @@ android {
 
     defaultConfig {
         applicationId = "com.origamilabs.orii"
-        minSdk = 21
+        minSdk = 23
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildFeatures {
-        dataBinding = true  // Active DataBinding
+        dataBinding = true
     }
 
     buildTypes {
-        getByName("release") {
+        release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro",
-                "crashlytics-rules.pro" // Pour Crashlytics
+                "proguard-rules.pro"
             )
         }
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
         jvmTarget = "17"
     }
 
+    buildToolsVersion = "35.0.1"
+
     packaging {
-        jniLibs {
-            useLegacyPackaging = false
+        resources {
+            excludes += setOf("values/values.xml")
         }
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
-    // Firebase BOM (gestion automatique des versions compatibles)
-    implementation(platform("com.google.firebase:firebase-bom:32.7.2"))
+    // Firebase BOM et dépendances associées
+    implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
+    implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-crashlytics-ktx")
+    implementation("com.google.firebase:firebase-messaging-ktx")
 
-    // Firebase
-    implementation("com.google.firebase:firebase-analytics")
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-crashlytics")
-    implementation("com.google.firebase:firebase-messaging")
+    // Google Play Services
+    implementation("com.google.android.gms:play-services-measurement:22.2.0")
+    implementation("com.google.android.gms:play-services-measurement-api:22.2.0")
+    implementation("com.google.android.gms:play-services-auth:21.3.0")
 
-    // Google Sign-In
-    implementation("com.google.android.gms:play-services-auth:20.7.0")
+    // Facebook SDK
+    implementation("com.facebook.android:facebook-android-sdk:18.0.2")
+    implementation("com.facebook.android:facebook-login:18.0.2")
+    implementation("com.facebook.android:facebook-share:18.0.2")
 
-    // Facebook SDK (Core, Login et Share)
-    implementation("com.facebook.android:facebook-android-sdk:16.1.3")
-    implementation("com.facebook.android:facebook-login:16.1.3")
-    implementation("com.facebook.android:facebook-share:16.1.3")
+    // Navigation
+    implementation("androidx.navigation:navigation-fragment-ktx:2.8.8")
+    implementation("androidx.navigation:navigation-ui-ktx:2.8.8")
 
-    // Navigation Component (avec Safe Args activé)
-    implementation("androidx.navigation:navigation-fragment-ktx:2.7.5")
-    implementation("androidx.navigation:navigation-ui-ktx:2.7.5")
-
-    // Volley pour les requêtes réseau
+    // Réseaux et JSON
     implementation("com.android.volley:volley:1.2.1")
+    implementation("com.google.code.gson:gson:2.12.1")
 
-    // Gson pour la sérialisation/désérialisation JSON
-    implementation("com.google.code.gson:gson:2.10.1")
-
-    // Room Database (base de données locale)
+    // Room (avec KSP)
     implementation("androidx.room:room-runtime:2.6.1")
-    kapt("androidx.room:room-compiler:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
 
-    // Dépendances AndroidX
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.9.0")
+    // UI et Material Components
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.material:material:1.12.0")
+    implementation("com.facebook.fresco:fresco:3.6.0")
 
-    // DataBinding (utile si DataBinding est activé dans buildFeatures)
-    implementation("androidx.databinding:databinding-runtime:8.1.0")
-    kapt("androidx.databinding:compiler:8.1.0")
+    // Hilt (avec KSP)
+    implementation("com.google.dagger:hilt-android:2.48")
+    ksp("com.google.dagger:hilt-compiler:2.48")
 
-    // Fresco (incluant com.facebook.drawee)
-    implementation("com.facebook.fresco:fresco:2.6.0")
+    // Material Icons Extended pour les icônes vectorielles
+    implementation("androidx.compose.material:material-icons-extended:1.4.3")
+}
+
+configurations.all {
+    resolutionStrategy {
+        // Configuration optionnelle pour forcer une version spécifique si nécessaire
+        // force("com.origamilabs.orii:module-name:version")
+    }
 }

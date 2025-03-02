@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <!-- ========================================================= -->
     <!-- Thème de base personnalisé (MaterialComponents)          -->
     <!-- ========================================================= -->
@@ -20,8 +19,15 @@
     <!-- ========================================================= -->
     <style name="AppButton" parent="Widget.MaterialComponents.Button">
         <item name="android:padding">@dimen/padding_button</item>
-        <item name="cornerRadius">@dimen/button_corner_radius</item>
+        <!-- Remplacement de l'attribut non reconnu "cornerRadius" par shapeAppearanceOverlay -->
+        <item name="shapeAppearanceOverlay">@style/MyButtonShape</item>
         <item name="android:textAllCaps">true</item>
+    </style>
+
+    <!-- Définition de la forme pour le bouton -->
+    <style name="MyButtonShape">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">@dimen/button_corner_radius</item>
     </style>
 
     <!-- ========================================================= -->
@@ -39,5 +45,4 @@
     <style name="AppText" parent="TextAppearance.MaterialComponents.Body1">
         <item name="android:textColor">?android:attr/textColorPrimary</item>
     </style>
-
 </resources>

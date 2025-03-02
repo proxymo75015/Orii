@@ -4,53 +4,27 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import com.origamilabs.orii.core.bluetooth.BluetoothService
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 
-abstract class BaseManager {
+abstract class BaseManager @Inject constructor(
+    @ApplicationContext protected val context: Context,
+    protected val bluetoothManager: BluetoothManager,
+    protected val bluetoothAdapter: BluetoothAdapter,
+    protected val bluetoothService: BluetoothService
+) {
+    private var isInitialized: Boolean = false
 
-    companion object {
-        private var mBluetoothAdapter: BluetoothAdapter? = null
-        private var mBluetoothManager: BluetoothManager? = null
+    /**
+     * Initialise le manager en appelant la méthode d'initialisation spécifique.
+     */
+    fun initialize() {
+        isInitialized = onInitialize()
     }
 
-    protected lateinit var mContext: Context
-    protected var mBluetoothService: BluetoothService? = null
-    private var mIsInitialized: Boolean = false
+    fun isInitialized(): Boolean = isInitialized
 
     abstract fun close()
     protected abstract fun onInitialize(): Boolean
     protected abstract fun start()
-
-    fun isInitialized(): Boolean = mIsInitialized
-
-    /**
-     * Initialise le manager avec le contexte donné.
-     *
-     * Note : Ce code suppose que le [context] est aussi une instance de [BluetoothService].
-     */
-    fun initialize(context: Context): Boolean {
-        mContext = context
-        mBluetoothService = context as BluetoothService
-        mBluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-        mBluetoothAdapter = mBluetoothManager?.adapter
-        mIsInitialized = onInitialize()
-        return mIsInitialized
-    }
-
-    protected fun getBluetoothManager(): BluetoothManager? {
-        if (mBluetoothManager == null) {
-            mBluetoothManager = mContext.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager
-        }
-        return mBluetoothManager
-    }
-
-    protected fun getBluetoothAdapter(): BluetoothAdapter? {
-        if (mBluetoothManager != null) {
-            if (mBluetoothAdapter == null) {
-                mBluetoothAdapter = mBluetoothManager?.adapter
-            }
-        } else {
-            mBluetoothAdapter = getBluetoothManager()?.adapter
-        }
-        return mBluetoothAdapter
-    }
 }

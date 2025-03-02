@@ -1,17 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <!-- ================================================== -->
-    <!-- Chaînes AppCompat / Système par défaut             -->
-    <!-- ================================================== -->
-    <string name="abc_action_bar_home_description">Aller à l'accueil</string>
-    <string name="abc_action_bar_up_description">Naviguer vers le haut</string>
-    <string name="abc_action_menu_overflow_description">Plus d'options</string>
+    <string name="abc_action_bar_home_description">Naviguer vers l\'accueil</string>
+    <string name="abc_action_bar_up_description">Naviguer vers l\'écran précédent</string>
+    <string name="abc_action_menu_overflow_description">Plus d\'options</string>
     <string name="abc_action_mode_done">Terminé</string>
-    <string name="abc_activity_chooser_view_see_all">Voir tout</string>
-    <string name="abc_activitychooserview_choose_application">Choisissez une application</string>
-    <string name="abc_capital_off">DÉSACTIVÉ</string>
-    <string name="abc_capital_on">ACTIVÉ</string>
+    <string name="abc_activity_chooser_view_see_all">Tout voir</string>
+    <string name="abc_activitychooserview_choose_application">Choisir une application</string>
+    <string name="abc_capital_off">ARRÊT</string>
+    <string name="abc_capital_on">MARCHE</string>
     <string name="abc_menu_alt_shortcut_label">Alt+</string>
     <string name="abc_menu_ctrl_shortcut_label">Ctrl+</string>
     <string name="abc_menu_delete_shortcut_label">supprimer</string>
@@ -22,151 +18,133 @@
     <string name="abc_menu_space_shortcut_label">espace</string>
     <string name="abc_menu_sym_shortcut_label">Sym+</string>
     <string name="abc_prepend_shortcut_label">Menu+</string>
-    <string name="abc_search_hint">Rechercher…</string>
-    <string name="abc_searchview_description_clear">Effacer la recherche</string>
+    <string name="abc_search_hint">Recherche…</string>
+    <string name="abc_searchview_description_clear">Effacer la requête</string>
     <string name="abc_searchview_description_query">Requête de recherche</string>
     <string name="abc_searchview_description_search">Rechercher</string>
-    <string name="abc_searchview_description_submit">Valider la recherche</string>
+    <string name="abc_searchview_description_submit">Soumettre la requête</string>
     <string name="abc_searchview_description_voice">Recherche vocale</string>
     <string name="abc_shareactionprovider_share_with">Partager avec</string>
     <string name="abc_shareactionprovider_share_with_application">Partager avec %s</string>
     <string name="abc_toolbar_collapse_description">Réduire</string>
-
-    <!-- ================================================== -->
-    <!-- Titres et noms d’activités                        -->
-    <!-- ================================================== -->
+    <string name="action_refresh_equalizer">Rafraîchir les valeurs</string>
     <string name="activity_battery_name">Batterie</string>
-    <string name="activity_custom_equalizer_name">Personnaliser le banc 1</string>
+    <string name="activity_custom_equalizer_name">Personnaliser la banque 1</string>
     <string name="activity_equalizer_name">Égaliseur</string>
-    <string name="activity_find_me_name">Profil Localiser</string>
-    <string name="activity_heart_rate_name">Profil Fréquence cardiaque</string>
-    <string name="activity_information_name">Informations sur l'appareil</string>
-    <string name="activity_proximity_name">Profil Proximité</string>
+    <string name="activity_find_me_name">Profil Find Me</string>
+    <string name="activity_heart_rate_name">Profil Heart Rate</string>
+    <string name="activity_information_name">Informations sur l\'appareil</string>
+    <string name="activity_proximity_name">Profil Proximity</string>
     <string name="activity_remote_name">Télécommande</string>
     <string name="activity_tws_name">TWS</string>
     <string name="activity_upgrade_name">Mise à jour</string>
 
-    <!-- ================================================== -->
-    <!-- Alertes et messages de notification               -->
-    <!-- ================================================== -->
     <string name="alert_app_header">Applications</string>
-    <string name="alert_empty_people">ORII peut vous avertir lorsqu'un contact spécifique vous envoie un message ou vous appelle.
-Cliquez sur le bouton + en haut à droite pour ajouter une personne importante.</string>
-    <string name="alert_file_error_message">Erreur lors de la récupération du fichier sélectionné. Veuillez réessayer ou choisir un autre fichier.</string>
+    <string name="alert_empty_people">ORII peut vous prévenir lorsqu\'un contact spécifique vous envoie un message ou vous appelle.
+
+ Cliquez sur le bouton + en haut à droite pour ajouter une personne importante.</string>
+    <string name="alert_file_error_message">Erreur lors de la récupération du fichier sélectionné. Veuillez réessayer ou en sélectionner un autre.</string>
     <string name="alert_file_error_title">Erreur de fichier</string>
     <string name="alert_info_deleting_header">Suppression</string>
-    <string name="alert_info_deleting_text">Balayez vers la gauche sur la ligne pour supprimer</string>
+    <string name="alert_info_deleting_text">Faites glisser vers la gauche sur la ligne pour supprimer</string>
     <string name="alert_info_header">Notifications</string>
-    <string name="alert_info_led_color">Affiche la couleur de la lumière de l'anneau</string>
+    <string name="alert_info_led_color">Affiche la couleur de la lumière de la bague</string>
     <string name="alert_info_sub_header">ORII peut vous envoyer des notifications personnalisées</string>
-    <string name="alert_info_vibration">Affiche le nombre de vibrations sur 4</string>
-    <string name="alert_level_high">ÉLEVÉ</string>
-    <string name="alert_level_mild">MODÉRÉ</string>
+    <string name="alert_info_vibration">Affiche le nombre de vibrations (sur 4)</string>
+    <string name="alert_level_high">FORT</string>
+    <string name="alert_level_mild">FAIBLE</string>
     <string name="alert_level_none">AUCUN</string>
-    <string name="alert_message_connecting">Appareil en cours de connexion…</string>
+    <string name="alert_message_connecting">Connexion de l\'appareil…</string>
     <string name="alert_message_connection_state_unknown">État de connexion inconnu</string>
     <string name="alert_message_disconnected">Appareil déconnecté</string>
-    <string name="alert_message_disconnecting">Appareil en cours de déconnexion…</string>
-    <string name="alert_no_file_selected_message">Aucun fichier sélectionné ou le fichier ne peut être récupéré. Veuillez en choisir un autre.</string>
+    <string name="alert_message_disconnecting">Déconnexion de l\'appareil…</string>
+    <string name="alert_no_file_selected_message">Aucun fichier sélectionné ou le fichier sélectionné est introuvable. Veuillez en choisir un autre.</string>
     <string name="alert_no_file_selected_title">Aucun fichier disponible</string>
-    <string name="alert_not_a_bin_file_message">Le fichier sélectionné n'est pas un fichier bin. Cette application ne supporte que les fichiers bin pour la mise à jour. Veuillez en choisir un autre.</string>
-    <string name="alert_not_a_bin_file_title">Fichier non bin</string>
+    <string name="alert_not_a_bin_file_message">Le fichier sélectionné n\'est pas un fichier bin. Cette application ne prend en charge que les fichiers bin pour la mise à jour. Veuillez en choisir un autre.</string>
+    <string name="alert_not_a_bin_file_title">Pas un fichier bin</string>
     <string name="alert_people_header">Contacts</string>
-    <string name="alert_permissions_message">Veuillez activer la permission de localisation, requise pour détecter les appareils LE.</string>
+    <string name="alert_permissions_message">Veuillez activer l\'autorisation de localisation, requise pour rechercher des appareils LE.</string>
     <string name="alert_permissions_title">Autorisations requises</string>
     <string name="alert_reconnection_message">En attente de reconnexion</string>
     <string name="alert_reconnection_title">Appareil déconnecté</string>
-    <string name="alert_upgrade_commit_message">Les données ont été transférées sur la carte et celle-ci est prête pour la validation. Voulez-vous confirmer la mise à jour ?</string>
+    <string name="alert_upgrade_commit_message">Les données ont été téléchargées sur la carte et celle-ci est prête pour la phase de validation. Voulez-vous valider votre téléchargement ?</string>
     <string name="alert_upgrade_commit_title">Validation des données</string>
-    <string name="alert_upgrade_complete_message">La mise à jour a été effectuée avec succès.</string>
+    <string name="alert_upgrade_complete_message">La mise à jour s\'est terminée avec succès.</string>
     <string name="alert_upgrade_complete_title">Mise à jour terminée</string>
-    <string name="alert_upgrade_low_battery_message">La batterie de votre appareil audio est faible. Veuillez le connecter au chargeur.</string>
+    <string name="alert_upgrade_low_battery_message">La batterie de votre appareil audio est faible. Veuillez le connecter à un chargeur.</string>
     <string name="alert_upgrade_low_battery_title">Batterie faible</string>
-    <string name="alert_upgrade_sync_id_different_message">Une mise à jour inachevée a été effectuée avec un fichier différent. En poursuivant, l'appareil perdra toutes les informations de la mise à jour précédente. Voulez-vous continuer ?</string>
+    <string name="alert_upgrade_sync_id_different_message">Une mise à jour précédente inachevée a été traitée avec un fichier différent. En poursuivant la mise à jour actuelle, l\'appareil perdra toutes les informations de la précédente mise à jour. Voulez-vous continuer ?</string>
     <string name="alert_upgrade_sync_id_different_title">Transfert de fichier terminé</string>
     <string name="alert_upgrade_transfer_complete_message">Voulez-vous continuer ?</string>
     <string name="alert_upgrade_transfer_complete_title">Transfert de fichier terminé</string>
 
-    <!-- ================================================== -->
-    <!-- Identifiants et configurations de l'application    -->
-    <!-- ================================================== -->
+    <string name="apf1_name">APF1</string>
+    <string name="apf2_name">APF2</string>
     <string name="app_name">ORII</string>
-    <string name="default_web_client_id">374563545903-hf07kdrj4g33lidtrvmd5emi7ev8d462.apps.googleusercontent.com</string>
-    <string name="project_id">orii-203005</string>
-    <string name="google_app_id">1:374563545903:android:7d73bcc023b6b83a</string>
-    <string name="google_crash_reporting_api_key">AIzaSyDUqu5u6EY6tUAV3okrJV70UXK8GfdwlJk</string>
-    <string name="google_storage_bucket">orii-203005.appspot.com</string>
-    <string name="gcm_defaultSenderId">374563545903</string>
-    <string name="google_api_key">AIzaSyDUqu5u6EY6tUAV3okrJV70UXK8GfdwlJk</string>
-    <string name="fb_login_protocol_scheme">fb1750926214954302</string>
-    <string name="facebook_app_id">1750926214954302</string>
+    <string name="app_version_info_bug_fixes">Corrections de bugs</string>
+    <string name="app_version_info_cancel">Annuler</string>
+    <string name="app_version_info_new_features">Nouvelles fonctionnalités</string>
+    <string name="app_version_info_title">MISE À JOUR DE L\'APPLICATION ORII</string>
+    <string name="app_version_info_update">Mettre à jour</string>
+    <string name="appbar_scrolling_view_behavior">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
 
-    <!-- ================================================== -->
-    <!-- Authentification et comptes                        -->
-    <!-- ================================================== -->
-    <string name="auth_dont_have_ac">Vous n'avez pas de compte ?</string>
-    <string name="auth_email">e-mail</string>
-    <string name="auth_email_login">Se connecter avec e-mail</string>
-    <string name="auth_error_email_is_empty">L'e-mail est vide</string>
-    <string name="auth_error_invalid_email_format">Format d'e-mail invalide</string>
+    <string name="auth_dont_have_ac">Vous n\'avez pas de compte ?</string>
+    <string name="auth_email">email</string>
+    <string name="auth_email_login">Se connecter avec l’email</string>
+    <string name="auth_error_email_is_empty">Email vide</string>
+    <string name="auth_error_invalid_email_format">Format d\'email invalide</string>
     <string name="auth_error_invalid_password_format">Format de mot de passe invalide</string>
     <string name="auth_facebook_login">Continuer avec Facebook</string>
     <string name="auth_forgot_password">Mot de passe oublié ?</string>
     <string name="auth_forgot_password_error_24hrs_3times">Vous ne pouvez pas réinitialiser le mot de passe plus de 3 fois en 24 heures.</string>
-    <string name="auth_forgot_password_error_email_empty">L'e-mail ne peut être vide.</string>
-    <string name="auth_forgot_password_error_email_not_found">E-mail introuvable.</string>
+    <string name="auth_forgot_password_error_email_empty">L\'email ne peut pas être vide.</string>
+    <string name="auth_forgot_password_error_email_not_found">Email introuvable.</string>
     <string name="auth_forgot_password_send">Envoyer</string>
     <string name="auth_forgot_password_success">Demande de réinitialisation envoyée.</string>
     <string name="auth_forgot_password_title">MOT DE PASSE OUBLIÉ</string>
     <string name="auth_google_login">Continuer avec Google</string>
-    <string name="auth_intro">Bienvenue dans le monde de l'interaction vocale.</string>
-    <string name="auth_login">Se connecter</string>
-    <string name="auth_login_error_already_verified">Votre e-mail a déjà été vérifié</string>
-    <string name="auth_login_error_email_not_verify">E-mail non vérifié</string>
-    <string name="auth_login_error_invalid_email_or_password">E-mail ou mot de passe invalide</string>
-    <string name="auth_login_error_invalid_verify_data">Vérification invalide</string>
-    <string name="auth_login_fail_facebook">Échec de connexion avec Facebook, veuillez réessayer plus tard</string>
-    <string name="auth_login_fail_google">Échec de connexion avec Google, veuillez réessayer plus tard</string>
-    <string name="auth_login_title">SE CONNECTER AVEC E-MAIL</string>
-    <string name="auth_mail_sent_text">Veuillez vérifier votre e-mail pour un lien de confirmation.</string>
+    <string name="auth_intro">Bienvenue dans le monde de l\'interaction vocale.</string>
+    <string name="auth_login">Connexion</string>
+    <string name="auth_login_error_already_verified">Votre email est déjà vérifié</string>
+    <string name="auth_login_error_email_not_verify">Email non vérifié</string>
+    <string name="auth_login_error_invalid_email_or_password">Email ou mot de passe invalide</string>
+    <string name="auth_login_error_invalid_verify_data">Vérification invalide.</string>
+    <string name="auth_login_fail_facebook">Échec de connexion Facebook, veuillez réessayer plus tard</string>
+    <string name="auth_login_fail_google">Échec de connexion Google, veuillez réessayer plus tard</string>
+    <string name="auth_login_title">CONNEXION PAR EMAIL</string>
+    <string name="auth_mail_sent_text">Veuillez vérifier votre email pour un lien de confirmation.</string>
     <string name="auth_mail_sent_title">E-MAIL ENVOYÉ !</string>
-    <string name="auth_need_more_help">Besoin d'aide ?</string>
+    <string name="auth_need_more_help"> Besoin d\'aide ? </string>
     <string name="auth_password">mot de passe</string>
     <string name="auth_register_confirm_password">confirmer le mot de passe</string>
-    <string name="auth_register_error_confirm_password_not_match">Les mots de passe ne correspondent pas</string>
-    <string name="auth_register_error_email_exist">L'e-mail existe déjà</string>
-    <string name="auth_register_error_email_not_real">Adresse e-mail non valide</string>
-    <string name="auth_register_error_invalid_email_format">Format d'e-mail invalide</string>
+    <string name="auth_register_error_confirm_password_not_match">Le mot de passe confirmé ne correspond pas</string>
+    <string name="auth_register_error_email_exist">Email déjà existant</string>
+    <string name="auth_register_error_email_not_real">Adresse email non valide</string>
+    <string name="auth_register_error_invalid_email_format">Format d\'email invalide</string>
     <string name="auth_register_error_invalid_password_length">Longueur de mot de passe invalide</string>
-    <string name="auth_register_title">S'INSCRIRE AVEC E-MAIL</string>
-    <string name="auth_sign_up">S'inscrire</string>
+    <string name="auth_register_title">INSCRIPTION PAR EMAIL</string>
+    <string name="auth_sign_up">S\'inscrire</string>
 
-    <!-- ================================================== -->
-    <!-- Informations sur la batterie et l'appareil         -->
-    <!-- ================================================== -->
+    <string name="band1_name">bande 1</string>
+    <string name="band2_name">bande 2</string>
+    <string name="band3_name">bande 3</string>
+    <string name="band4_name">bande 4</string>
+    <string name="band5_name">bande 5</string>
+    <string name="bands_title">Bandes</string>
     <string name="battery_description_internal">Batterie interne</string>
     <string name="battery_description_second">Batterie de la télécommande</string>
-    <string name="battery_description_third">Batterie du périphérique associé</string>
+    <string name="battery_description_third">Batterie de l\'appareil associé</string>
     <string name="battery_description_unknown">Batterie inconnue</string>
     <string name="battery_name">Batterie</string>
     <string name="body_sensor_location">Emplacement</string>
     <string name="body_sensor_location_title">Emplacement du capteur corporel</string>
-    <string name="bonded_devices">Appairés</string>
-
-    <!-- ================================================== -->
-    <!-- Divers : Boutons, menus, navigation, etc.          -->
-    <!-- ================================================== -->
-    <string name="app_version_info_bug_fixes">Corrections de bugs</string>
-    <string name="app_version_info_cancel">Annuler</string>
-    <string name="app_version_info_new_features">Nouvelles fonctionnalités</string>
-    <string name="app_version_info_title">MISE À JOUR DE L'APPLICATION ORII</string>
-    <string name="app_version_info_update">Mettre à jour</string>
-    <string name="appbar_scrolling_view_behavior">com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior</string>
+    <string name="bonded_devices">APPAREILLÉS</string>
+    <string name="bottom_sheet_behavior">com.google.android.material.bottomsheet.BottomSheetBehavior</string>
     <string name="bt_n_location_dialog_bt">Bluetooth</string>
     <string name="bt_n_location_dialog_later">Plus tard</string>
     <string name="bt_n_location_dialog_location">Localisation / GPS</string>
-    <string name="bt_n_location_dialog_not_enabled">Bluetooth et Localisation/GPS non activés</string>
-    <string name="bt_n_location_dialog_title">Veuillez activer Bluetooth et Localisation/GPS :</string>
+    <string name="bt_n_location_dialog_not_enabled">Bluetooth et Localisation/GPS désactivés</string>
+    <string name="bt_n_location_dialog_title">Veuillez activer les fonctionnalités Bluetooth et Localisation/GPS :</string>
     <string name="button_abort">ANNULER</string>
     <string name="button_battery_level">Batterie</string>
     <string name="button_configure">CONFIGURER</string>
@@ -176,7 +154,7 @@ Cliquez sur le bouton + en haut à droite pour ajouter une personne importante.<
     <string name="button_continue">CONTINUER</string>
     <string name="button_disconnect">DÉCONNECTER</string>
     <string name="button_equalizer">Égaliseur</string>
-    <string name="button_find_device">Trouver</string>
+    <string name="button_find_device">Localiser</string>
     <string name="button_heart_rate">Fréquence cardiaque</string>
     <string name="button_led">LED</string>
     <string name="button_minus">-</string>
@@ -186,242 +164,454 @@ Cliquez sur le bouton + en haut à droite pour ajouter une personne importante.<
     <string name="button_proximity">Proximité</string>
     <string name="button_remote">Télécommande</string>
     <string name="button_reset">RÉINITIALISER</string>
-    <string name="button_start_upgrade">DÉMARRER LA MISE À JOUR</string>
+    <string name="button_start_upgrade">COMMENCER LA MISE À JOUR</string>
     <string name="button_tws">TWS</string>
-    <string name="button_upgrade">Mise à jour</string>
+    <string name="button_upgrade">Mettre à jour</string>
     <string name="bypass_name">BYPASS</string>
 
-    <!-- ================================================== -->
-    <!-- Compteurs et messages pour les saisies             -->
-    <!-- ================================================== -->
-    <string name="character_counter_content_description">Caractères saisis : %1$d sur %2$d</string>
+    <string name="character_counter_content_description">Caractères saisis %1$d sur %2$d</string>
     <string name="character_counter_overflowed_content_description">Limite de caractères dépassée : %1$d sur %2$d</string>
     <string name="character_counter_pattern">%1$d / %2$d</string>
-    <string name="chip_text">Texte de puce</string>
+    <string name="chip_text">Texte du chip</string>
     <string name="clear_text_end_icon_content_description">Effacer le texte</string>
 
-    <!-- ================================================== -->
-    <!-- Chaînes spécifiques à Facebook et Google           -->
-    <!-- ================================================== -->
-    <string name="com_facebook_device_auth_instructions">Rendez-vous sur &lt;b&gt;facebook.com/device&lt;/b&gt; et saisissez le code affiché ci-dessus.</string>
-    <string name="com_facebook_image_download_unknown_error">Erreur inattendue lors du téléchargement d'une image.</string>
-    <string name="com_facebook_internet_permission_error_message">La connexion via WebView nécessite la permission INTERNET.</string>
-    <string name="com_facebook_internet_permission_error_title">Erreur dans AndroidManifest</string>
-    <string name="com_facebook_like_button_liked">J'aime</string>
-    <string name="com_facebook_like_button_not_liked">J'aime</string>
+    <string name="com.crashlytics.android.build_id">81e2d0a3-e483-423a-a8bf-fd15ac6db5b8</string>
+    <string name="com_facebook_device_auth_instructions">Visitez facebook.com/device et entrez le code ci-dessus.</string>
+    <string name="com_facebook_image_download_unknown_error">Erreur inattendue lors du téléchargement d\'une image.</string>
+    <string name="com_facebook_internet_permission_error_message">La connexion via WebView nécessite l\'autorisation INTERNET</string>
+    <string name="com_facebook_internet_permission_error_title">Erreur dans le fichier AndroidManifest</string>
+    <string name="com_facebook_like_button_liked">J\'aime déjà</string>
+    <string name="com_facebook_like_button_not_liked">J\'aime</string>
     <string name="com_facebook_loading">Chargement…</string>
     <string name="com_facebook_loginview_cancel_action">Annuler</string>
     <string name="com_facebook_loginview_log_in_button">Se connecter</string>
     <string name="com_facebook_loginview_log_in_button_continue">Continuer avec Facebook</string>
     <string name="com_facebook_loginview_log_in_button_long">Se connecter avec Facebook</string>
     <string name="com_facebook_loginview_log_out_action">Se déconnecter</string>
-    <string name="com_facebook_loginview_log_out_button">Se déconnecter</string>
+    <string name="com_facebook_loginview_log_out_button">Déconnexion</string>
     <string name="com_facebook_loginview_logged_in_as">Connecté en tant que : %1$s</string>
     <string name="com_facebook_loginview_logged_in_using_facebook">Connecté via Facebook</string>
     <string name="com_facebook_send_button_text">Envoyer</string>
     <string name="com_facebook_share_button_text">Partager</string>
-    <string name="com_facebook_smart_device_instructions">Pour connecter votre compte, ouvrez l'application Facebook sur votre mobile et vérifiez vos notifications.</string>
+    <string name="com_facebook_smart_device_instructions">Pour lier votre compte, ouvrez l\'application Facebook sur votre appareil mobile et vérifiez vos notifications.</string>
     <string name="com_facebook_smart_device_instructions_or">- OU -</string>
     <string name="com_facebook_smart_login_confirmation_cancel">Pas vous ?</string>
     <string name="com_facebook_smart_login_confirmation_continue_as">Continuer en tant que %1$s</string>
     <string name="com_facebook_smart_login_confirmation_title">Confirmer la connexion</string>
-    <string name="com_facebook_tooltip_default">Vous avez le contrôle – choisissez les informations à partager avec les applications.</string>
+    <string name="com_facebook_tooltip_default">Vous contrôlez tout : choisissez quelles informations partager avec les applications.</string>
 
     <string name="common_google_play_services_enable_button">Activer</string>
-    <string name="common_google_play_services_enable_text">%1$s ne fonctionnera pas tant que les services Google Play ne sont pas activés.</string>
-    <string name="common_google_play_services_enable_title">Activer les services Google Play</string>
+    <string name="common_google_play_services_enable_text">%1$s ne fonctionnera pas tant que vous n\'aurez pas activé Google Play services.</string>
+    <string name="common_google_play_services_enable_title">Activer Google Play services</string>
     <string name="common_google_play_services_install_button">Installer</string>
-    <string name="common_google_play_services_install_text">%1$s ne fonctionnera pas sans les services Google Play, absents de votre appareil.</string>
-    <string name="common_google_play_services_install_title">Obtenir les services Google Play</string>
-    <string name="common_google_play_services_notification_channel_name">Disponibilité des services Google Play</string>
-    <string name="common_google_play_services_notification_ticker">Erreur des services Google Play</string>
-    <string name="common_google_play_services_unknown_issue">%1$s rencontre un problème avec les services Google Play. Veuillez réessayer.</string>
-    <string name="common_google_play_services_unsupported_text">%1$s ne fonctionnera pas sans les services Google Play, qui ne sont pas supportés par votre appareil.</string>
+    <string name="common_google_play_services_install_text">%1$s ne fonctionnera pas sans Google Play services, qui sont absents de votre appareil.</string>
+    <string name="common_google_play_services_install_title">Obtenir Google Play services</string>
+    <string name="common_google_play_services_notification_channel_name">Disponibilité des Google Play services</string>
+    <string name="common_google_play_services_notification_ticker">Erreur Google Play services</string>
+    <string name="common_google_play_services_unknown_issue">%1$s rencontre un problème avec Google Play services. Veuillez réessayer.</string>
+    <string name="common_google_play_services_unsupported_text">%1$s ne fonctionnera pas sans Google Play services, qui ne sont pas pris en charge par votre appareil.</string>
     <string name="common_google_play_services_update_button">Mettre à jour</string>
-    <string name="common_google_play_services_update_text">%1$s ne fonctionnera pas tant que les services Google Play ne seront pas mis à jour.</string>
-    <string name="common_google_play_services_update_title">Mettre à jour les services Google Play</string>
-    <string name="common_google_play_services_updating_text">%1$s ne fonctionnera pas sans les services Google Play, actuellement en cours de mise à jour.</string>
-    <string name="common_google_play_services_wear_update_text">Une nouvelle version des services Google Play est requise. Elle se mettra à jour automatiquement sous peu.</string>
+    <string name="common_google_play_services_update_text">%1$s ne fonctionnera pas tant que vous n\'aurez pas mis à jour Google Play services.</string>
+    <string name="common_google_play_services_update_title">Mettre à jour Google Play services</string>
+    <string name="common_google_play_services_updating_text">%1$s ne fonctionnera pas sans Google Play services, qui sont en cours de mise à jour.</string>
+    <string name="common_google_play_services_wear_update_text">Une nouvelle version de Google Play services est requise. Elle va se mettre à jour automatiquement.</string>
     <string name="common_open_on_phone">Ouvrir sur le téléphone</string>
     <string name="common_signin_button_text">Se connecter</string>
     <string name="common_signin_button_text_long">Se connecter avec Google</string>
 
-    <!-- ================================================== -->
-    <!-- Statuts de connexion et informations appareil       -->
-    <!-- ================================================== -->
     <string name="connect_no_available_paired_device">Aucun appareil appairé disponible.</string>
-    <string name="connect_no_available_scanned_device">Aucun appareil détecté. Veuillez vérifier que votre appareil est en visibilité et que le Bluetooth est activé. Pour Android 6 et plus, assurez-vous également que la permission de localisation est activée et que le service de localisation est disponible.</string>
-    <string name="contact_no_phone_number">Ce contact n'a pas de numéro de téléphone.</string>
-    <string name="customization_not_supported">L'application ne peut pas configurer l'appareil connecté.</string>
-    <string name="havent_connected_to_orii">Vous n'êtes pas connecté à ORII.</string>
-    <string name="home_connect_fail">Impossible de se connecter à ORII.</string>
-    <string name="home_connection_state_connected">Connecté.</string>
-    <string name="home_connection_state_connecting">Connexion à ORII en cours…</string>
-    <string name="home_intro">Maintenez enfoncés les deux boutons pour allumer ORII. Assurez-vous que la lumière d'ORII clignote en bleu.</string>
-    <string name="home_retry">Réessayer</string>
-    <string name="home_sound_test_play">Test sonore</string>
-    <string name="home_sound_test_stop">Arrêter le test sonore</string>
-    <string name="home_stop_searching">Arrêter la recherche</string>
-    <string name="home_update_available">Une nouvelle mise à jour d'ORII est disponible.</string>
-    <string name="home_update_up_to_date">Bravo ! Tout est à jour.</string>
-    <string name="home_welcome">Bienvenue, %1$s</string>
+    <string name="connect_no_available_scanned_device">Aucun appareil détecté. Veuillez vérifier que votre appareil diffuse bien et qu\'il est disponible, et que le Bluetooth est activé sur votre téléphone. Si vous utilisez Android 6 ou une version ultérieure, veuillez aussi vérifier que l\'autorisation de Localisation est activée pour cette application et que le service de localisation est activé.</string>
+    <string name="contact_no_phone_number">Ce contact n\'a pas de numéro de téléphone</string>
+    <string name="customization_not_supported">L\'application ne peut pas configurer l\'appareil connecté.</string>
+    <string name="default_web_client_id">374563545903-hf07kdrj4g33lidtrvmd5emi7ev8d462.apps.googleusercontent.com</string>
 
-    <!-- ================================================== -->
-    <!-- Mesures et profils (Fréquence cardiaque, RSSI, etc.) -->
-    <!-- ================================================== -->
-    <string name="heart_rate_control_point_title">Point de contrôle de la fréquence cardiaque</string>
-    <string name="heart_rate_energy_subtitle">Accumulé depuis la réinitialisation</string>
+    <string name="device_state_bond_unknown">appairage inconnu</string>
+    <string name="device_state_bonded">appairé</string>
+    <string name="device_state_bonding">appairage en cours…</string>
+    <string name="device_state_connected">connecté</string>
+    <string name="device_state_connecting">connexion…</string>
+    <string name="device_state_connection_unknown">connexion inconnue</string>
+    <string name="device_state_disconnected">déconnecté</string>
+    <string name="device_state_disconnecting">déconnexion…</string>
+    <string name="device_state_not_bonded">non appairé</string>
+    <string name="device_type_classic">Appareil BR/EDR</string>
+    <string name="device_type_dual">Appareil DUAL</string>
+    <string name="device_type_le">Appareil Low Energy</string>
+    <string name="device_type_unknown">Type d\'appareil inconnu</string>
+
+    <string name="dialog_incorrect_state_message">Veuillez diffuser de la musique pour utiliser cette fonctionnalité.</string>
+    <string name="dialog_incorrect_state_title">État de la carte incorrect</string>
+    <string name="dialog_setting_gesture_custom_command_cancel">Annuler</string>
+    <string name="dialog_setting_gesture_custom_command_enter">Entrer</string>
+    <string name="dialog_setting_gesture_custom_command_option_0">Webhook (bêta)</string>
+    <string name="dialog_setting_gesture_custom_command_option_1">Ne pas déranger</string>
+    <string name="dialog_setting_gesture_custom_command_option_2">Lecture de l\'heure</string>
+    <string name="dialog_setting_gesture_custom_command_option_3">Activer/Désactiver la lampe</string>
+    <string name="dialog_setting_gesture_custom_command_option_4">Écran éteint/allumé</string>
+    <string name="dialog_setting_gesture_custom_command_option_5">Lecture du récapitulatif quotidien</string>
+    <string name="dialog_setting_gesture_custom_command_title">Choisir parmi la liste ci-dessous</string>
+    <string name="dialog_setting_gesture_web_hook_back">&lt;</string>
+    <string name="dialog_setting_gesture_web_hook_tutorial_content">Appuyez sur \'Play Video\' pour découvrir comment configurer l\'automatisation par geste grâce au service Webhook. Suivez la vidéo pour trouver votre lien Webhook et collez-le ensuite dans l\'application ORII.</string>
+    <string name="dialog_setting_gesture_web_hook_tutorial_play_video">LANCER LA VIDÉO -&gt;</string>
+    <string name="dialog_setting_gesture_web_hook_tutorial_title">Configuration de Webhook</string>
+    <string name="dialog_setting_gesture_web_hook_url_cancel">Annuler</string>
+    <string name="dialog_setting_gesture_web_hook_url_enter">Entrer</string>
+    <string name="dialog_setting_gesture_web_hook_url_prompt">Collez votre webhook url ici</string>
+    <string name="dialog_setting_gesture_web_hook_url_title">Webhook (bêta)</string>
+    <string name="dialog_upgrade_error">Une erreur est survenue lors de la mise à jour, celle-ci va être annulée.</string>
+    <string name="dialog_upgrade_error_board_not_ready">La carte n\'est pas prête pour une mise à jour. Veuillez réessayer plus tard.</string>
+    <string name="dialog_upgrade_error_exception">Une exception s\'est produite lors de la mise à jour. Veuillez réessayer plus tard ou contacter votre fournisseur d\'application.</string>
+    <string name="dialog_upgrade_error_from_board">Une erreur s\'est produite sur la carte. Elle a renvoyé le code de retour suivant :</string>
+    <string name="dialog_upgrade_error_protocol_exception">Une exception de protocole s\'est produite lors de la mise à jour. Veuillez réessayer plus tard ou contacter votre fournisseur d\'application.</string>
+    <string name="dialog_upgrade_title">Mise à jour en cours</string>
+    <string name="empty_content_description"></string>
+
+    <string name="equalizer_general_settings">Paramètres généraux</string>
+    <string name="error_icon_content_description">Erreur</string>
+    <string name="exposed_dropdown_menu_content_description">Afficher le menu déroulant</string>
+    <string name="fab_transformation_scrim_behavior">com.google.android.material.transformation.FabTransformationScrimBehavior</string>
+    <string name="fab_transformation_sheet_behavior">com.google.android.material.transformation.FabTransformationSheetBehavior</string>
+    <string name="facebook_app_id">1750926214954302</string>
+    <string name="faq_support_orii_website_url">https://www.orii.io/pages/support</string>
+    <string name="fb_login_protocol_scheme">fb1750926214954302</string>
+    <string name="fcm_fallback_notification_channel_label">Divers</string>
+    <string name="feedback_input_error">Le commentaire ne peut pas être vide.</string>
+    <string name="feedback_orii_website_url">https://orii-help.zendesk.com/hc/en-us/requests/new</string>
+    <string name="feedback_post_success_close">Fermer</string>
+    <string name="feedback_post_success_message">Merci pour vos commentaires.</string>
+    <string name="feedback_post_success_title">Commentaire envoyé</string>
+    <string name="feedback_send">Envoyer</string>
+    <string name="feedback_title">Que souhaitez-vous dire ?</string>
+    <string name="filter_type_title">Type de filtre</string>
+    <string name="find_me_alert_level_subtitle">Appuyez sur le bouton pour activer l\'alerte</string>
+    <string name="find_me_alert_level_title">Niveau d\'alerte Find Me</string>
+    <string name="firebase_database_url">https://orii-203005.firebaseio.com</string>
+    <string name="firmware_test_mode_update_available">Une mise à jour forcée du firmware ORII est disponible</string>
+    <string name="firmware_test_mode_welcome">Bienvenue en mode de test</string>
+    <string name="frequency_title">F</string>
+    <string name="gain_title">G</string>
+    <string name="gcm_defaultSenderId">374563545903</string>
+    <string name="google_api_key">AIzaSyDUqu5u6EY6tUAV3okrJV70UXK8GfdwlJk</string>
+    <string name="google_app_id">1:374563545903:android:7d73bcc023b6b83a</string>
+    <string name="google_crash_reporting_api_key">AIzaSyDUqu5u6EY6tUAV3okrJV70UXK8GfdwlJk</string>
+    <string name="google_storage_bucket">orii-203005.appspot.com</string>
+    <string name="havent_connected_to_orii">Vous n\'avez pas connecté ORII</string>
+    <string name="heart_rate_control_point_title">Point de contrôle du rythme cardiaque</string>
+    <string name="heart_rate_energy_subtitle">Cumulé depuis la réinitialisation</string>
     <string name="heart_rate_energy_title">Énergie dépensée</string>
-    <string name="heart_rate_energy_unit">KJ</string>
-    <string name="heart_rate_measurement_title">Mesure de la fréquence cardiaque</string>
+    <string name="heart_rate_energy_unit">kJ</string>
+    <string name="heart_rate_measurement_title">Mesure du rythme cardiaque</string>
     <string name="heart_rate_measurement_unit">BPM</string>
     <string name="heart_rate_no_value">-</string>
     <string name="heart_rate_rr_intervals_title">Intervalle(s) RR</string>
     <string name="heart_rate_rr_intervals_unit">ms</string>
     <string name="heart_rate_sensor_contact_status_in_contact">en contact</string>
-    <string name="heart_rate_sensor_contact_status_no_contact">aucun contact ou contact faible</string>
-    <string name="heart_rate_sensor_contact_status_not_supported">non supporté</string>
-    <string name="heart_rate_sensor_contact_title">Statut du contact du capteur</string>
-    <string name="info_api_version">Version de l'API</string>
-    <string name="info_bass_boost_unsupported">Fonction Bass Boost non supportée</string>
-    <string name="info_battery_level">Niveau de batterie</string>
+    <string name="heart_rate_sensor_contact_status_no_contact">pas ou mauvais contact</string>
+    <string name="heart_rate_sensor_contact_status_not_supported">non pris en charge</string>
+    <string name="heart_rate_sensor_contact_title">État du contact du capteur</string>
+    <string name="help_app_version">Version de l\'application : %1$s </string>
+    <string name="help_feedback">Envoyer une question/un commentaire</string>
+    <string name="help_firmware">Version du firmware : %1$s </string>
+    <string name="help_header">Comment pouvons-nous vous aider ?</string>
+    <string name="help_privacy_policy">Politique de confidentialité</string>
+    <string name="help_support">Support supplémentaire</string>
+    <string name="help_tutorial">Tutoriel</string>
+    <string name="hide_bottom_view_on_scroll_behavior">com.google.android.material.behavior.HideBottomViewOnScrollBehavior</string>
+    <string name="home_connect_fail">Impossible de se connecter à ORII</string>
+    <string name="home_connection_state_connected">Connecté.</string>
+    <string name="home_connection_state_connecting">Connexion à ORII…</string>
+    <string name="home_intro"> Maintenez enfoncés les deux boutons pour allumer ORII. Assurez-vous que la lumière d\'ORII clignote en bleu. </string>
+    <string name="home_retry">Réessayer</string>
+    <string name="home_sound_test_play">Test audio</string>
+    <string name="home_sound_test_stop">Arrêter le test audio</string>
+    <string name="home_stop_searching">Arrêter la recherche</string>
+    <string name="home_update_available">Une nouvelle mise à jour ORII est disponible</string>
+    <string name="home_update_up_to_date">Hourra ! Tout est à jour.</string>
+    <string name="home_welcome">Bienvenue, %1$s </string>
+    <string name="hpf1_name">HPF1</string>
+    <string name="hpf2_name">HPF2</string>
+    <string name="hs1_name">HS1</string>
+    <string name="hs2_name">HS2</string>
+    <string name="icon_content_description">Icône de dialogue</string>
+    <string name="info_3D_unsupported">Fonction 3D non prise en charge</string>
+    <string name="info_api_version">Version de l\'API</string>
+    <string name="info_bass_boost_unsupported">Fonction de renforcement des basses non prise en charge</string>
+    <string name="info_battery_level">Niveau de la batterie</string>
     <string name="info_battery_status">État de la batterie</string>
     <string name="info_battery_status_in_charge">En charge</string>
     <string name="info_battery_status_no_charge">Non en charge</string>
     <string name="info_bluetooth_address">Adresse Bluetooth</string>
-    <string name="info_custom_unsupported">Personnalisation de l'égaliseur non supportée</string>
-    <string name="info_name">Nom de l'appareil</string>
-    <string name="info_no_title" />
-    <string name="info_not_supported">non supporté</string>
+    <string name="info_custom_unsupported">Fonction de personnalisation de l\'égaliseur non prise en charge</string>
+    <string name="info_name">Nom de l\'appareil</string>
+    <string name="info_no_title"></string>
+    <string name="info_not_supported">non pris en charge</string>
     <string name="info_rssi_signal">Signal RSSI</string>
-    <string name="link_loss_alert_level_subtitle">Définir le niveau d'alerte en cas de perte de liaison</string>
-    <string name="link_loss_alert_level_title">Niveau d'alerte de perte de liaison</string>
-    <string name="location_chest">torse</string>
-    <string name="location_ear_lobe">lobe de l'oreille</string>
+    <string name="link_loss_alert_level_subtitle">Configurer le niveau d\'alerte en cas de perte de connexion</string>
+    <string name="link_loss_alert_level_title">Niveau d\'alerte Link Loss</string>
+    <string name="location_chest">poitrine</string>
+    <string name="location_ear_lobe">lobe d\'oreille</string>
     <string name="location_finger">doigt</string>
     <string name="location_foot">pied</string>
     <string name="location_hand">main</string>
     <string name="location_other">autre</string>
     <string name="location_wrist">poignet</string>
+    <string name="lpf1_name">LPF1</string>
+    <string name="lpf2_name">LPF2</string>
+    <string name="ls1_name">LS1</string>
+    <string name="ls2_name">LS2</string>
     <string name="master_gain_title">Gain principal</string>
-    <string name="quality_title">Q</string>
-    <string name="reset_energy_expended_title">Réinitialiser l'énergie dépensée</string>
+    <string name="message_no_upgrade_file_available">Aucun fichier disponible. Veuillez vérifier les autorisations de l\'application et activer l\'accès au stockage.</string>
+    <string name="mtrl_badge_numberless_content_description">Nouvelle notification</string>
+    <string name="mtrl_chip_close_icon_content_description">Retirer %1$s</string>
+    <string name="mtrl_exceed_max_badge_number_suffix">%1$d%2$s</string>
+    <string name="mtrl_picker_cancel">@android:string/cancel</string>
+    <string name="mtrl_picker_confirm">@android:string/ok</string>
+    <string name="mtrl_picker_date_format">dd MMM yyyy</string>
+    <string name="mtrl_picker_date_format_without_year">dd MMM</string>
+    <string name="mtrl_picker_date_header_selected">%1$s</string>
+    <string name="mtrl_picker_date_header_title">Sélectionner une date</string>
+    <string name="mtrl_picker_date_header_unselected">Date sélectionnée</string>
+    <string name="mtrl_picker_invalid_format">Format invalide.
+Utilisez : %1$s</string>
+    <string name="mtrl_picker_invalid_range">Plage invalide.</string>
+    <string name="mtrl_picker_out_of_range">Hors plage : %1$s</string>
+    <string name="mtrl_picker_range_header_only_end_selected">Date de début – %1$s</string>
+    <string name="mtrl_picker_range_header_only_start_selected">%1$s – Date de fin</string>
+    <string name="mtrl_picker_range_header_selected">%1$s – %2$s</string>
+    <string name="mtrl_picker_range_header_title">Sélectionner une plage de dates</string>
+    <string name="mtrl_picker_range_header_unselected">Date de début – Date de fin</string>
+    <string name="mtrl_picker_save">Enregistrer</string>
+    <string name="mtrl_picker_text_input_date_format">dd/MM/yyyy</string>
+    <string name="mtrl_picker_text_input_date_hint">Date</string>
+    <string name="mtrl_picker_text_input_date_range_end_hint">Date de fin</string>
+    <string name="mtrl_picker_text_input_date_range_start_hint">Date de début</string>
 
-    <!-- ================================================== -->
-    <!-- Notifications, Text-to-Speech, etc.                -->
-    <!-- ================================================== -->
+    <string name="nav_app_bar_navigate_up_description">Naviguer vers l\'écran précédent</string>
+    <string name="nav_app_bar_open_drawer_description">Ouvrir le panneau de navigation</string>
+    <string name="nls_message">Pour que l\'application fonctionne, vous devez activer le Service Notification Listener. L\'activer maintenant ?</string>
+    <string name="nls_title">Service d\'écoute des notifications</string>
+    <string name="notification_battery_channel_id">orii_batterie</string>
+    <string name="notification_battery_channel_name">Batterie faible</string>
+    <string name="notification_connection_channel_id">orii_connection</string>
+    <string name="notification_connection_channel_name">État de la connexion</string>
+    <string name="notification_push_channel_id">orii_push</string>
+    <string name="notification_push_channel_name">Notification Push</string>
     <string name="notification_text_battery_level">Niveau de batterie : </string>
-    <string name="notification_text_battery_low">La batterie d'ORII est faible. Veuillez le connecter au chargeur.</string>
-    <string name="notification_title_battery_low">Attention : Batterie faible</string>
+    <string name="notification_text_battery_low">La batterie d\'ORII est presque vide. Veuillez le connecter au chargeur.</string>
+    <string name="notification_title_battery_low">Avertissement : Batterie faible</string>
     <string name="notification_title_connected">ORII est connecté</string>
-    <string name="notification_title_connecting">ORII se connecte</string>
+    <string name="notification_title_connecting">Connexion à ORII</string>
     <string name="notification_update_channel_id">orii_update</string>
     <string name="notification_update_channel_name">État de la mise à jour</string>
-    <string name="tts_call_from">Vous avez un appel de %1$s</string>
+
+    <string name="password_toggle_content_description">Afficher le mot de passe</string>
+    <string name="path_password_eye">M12,4.5C7,4.5 2.73,7.61 1,12c1.73,4.39 6,7.5 11,7.5s9.27-3.11 11-7.5c-1.73-4.39 -6-7.5 -11-7.5zM12,17c-2.76,0 -5-2.24 -5-5s2.24-5 5-5 5,2.24 5,5 -2.24,5 -5,5zM12,9c-1.66,0 -3,1.34 -3,3s1.34,3 3,3 3-1.34 3-3-1.34-3 -3-3z</string>
+    <string name="path_password_eye_mask_strike_through">M2,4.27 L19.73,22 L22.27,19.46 L4.54,1.73 L4.54,1 L23,1 L23,23 L1,23 L1,4.27 Z</string>
+    <string name="path_password_eye_mask_visible">M2,4.27 L2,4.27 L4.54,1.73 L4.54,1.73 L4.54,1 L23,1 L23,23 L1,23 L1,4.27 Z</string>
+    <string name="path_password_strike_through">M3.27,4.27 L19.74,20.74</string>
+    <string name="peq_name">PEQ</string>
+    <string name="preset_0">Banque 0</string>
+    <string name="preset_1">Banque 1</string>
+    <string name="preset_2">Banque 2</string>
+    <string name="preset_3">Banque 3</string>
+    <string name="preset_4">Banque 4</string>
+    <string name="preset_5">Banque 5</string>
+    <string name="preset_6">Banque 6</string>
+    <string name="privacy_policy_orii_website_url">https://orii.io/pages/privacy-policy</string>
+    <string name="project_id">orii-203005</string>
+    <string name="proximity_threshold_high">Alerte forte à</string>
+    <string name="proximity_threshold_mild">Alerte faible à</string>
+    <string name="proximity_threshold_subtitle">Définissez les seuils d\'alerte immédiats faible et fort</string>
+    <string name="proximity_threshold_title">Seuils d\'alerte immédiate</string>
+    <string name="quality_title">Q</string>
+    <string name="question_support_orii_website_url">https://orii.io/getstarted</string>
+    <string name="reset_energy_expended_title">Réinitialiser l\'énergie dépensée</string>
+    <string name="scanned_devices">DÉTECTÉS</string>
+    <string name="search_menu_title">Rechercher</string>
+    <string name="setting_gesture_call_control_content">Accepter/Rejeter appel entrant</string>
+    <string name="setting_gesture_call_control_title">Contrôle d\'appel</string>
+    <string name="setting_gesture_down_double_tap_content_1">Piste suivante
+Terminer/Rejeter les appels</string>
+    <string name="setting_gesture_down_double_tap_content_2">Pendant un appel téléphonique</string>
+    <string name="setting_gesture_down_double_tap_title">Double tap vers le bas</string>
+    <string name="setting_gesture_flat_double_tap_content">Lecture des messages</string>
+    <string name="setting_gesture_flat_double_tap_title">Double tap à plat</string>
+    <string name="setting_gesture_flat_triple_tap_content">Commande personnalisée</string>
+    <string name="setting_gesture_flat_triple_tap_enter_url">Entrer l\'URL</string>
+    <string name="setting_gesture_flat_triple_tap_title">Triple tap à plat</string>
+    <string name="setting_gesture_reserved_content">réservé</string>
+    <string name="setting_gesture_reserved_title">réservé</string>
+    <string name="setting_gesture_reverse_double_tap_content">Commande personnalisée</string>
+    <string name="setting_gesture_reverse_double_tap_title">Double tap inversé</string>
+    <string name="setting_gesture_side_double_tap_content">Lecture/Pause piste</string>
+    <string name="setting_gesture_side_double_tap_title">Double tap latéral</string>
+    <string name="setting_gesture_tap_strength_strong">Fort</string>
+    <string name="setting_gesture_tap_strength_text">Sélectionnez la sensibilité de tapotement optimale pour déclencher les commandes gestuelles</string>
+    <string name="setting_gesture_tap_strength_title">Sensibilité du tap</string>
+    <string name="setting_gesture_tap_strength_weak">Faible</string>
+    <string name="setting_gesture_up_double_tap_content_1">Assistant vocal
+Accepter les appels</string>
+    <string name="setting_gesture_up_double_tap_content_2">Pendant un appel téléphonique</string>
+    <string name="setting_gesture_up_double_tap_title">Double tap vers le haut</string>
+    <string name="setting_gestures_controller_off">Tout désactiver</string>
+    <string name="setting_gestures_controller_on">Tout activer</string>
+    <string name="setting_gestures_text">Activer individuellement les gestes ORII</string>
+    <string name="setting_gestures_title">Gestes</string>
+    <string name="setting_read_speed_fast">Rapide</string>
+    <string name="setting_read_speed_slow">Lent</string>
+    <string name="setting_read_speed_text">Régler la vitesse de lecture des messages par ORII</string>
+    <string name="setting_read_speed_title">Vitesse de lecture</string>
+    <string name="setting_swap_mic_mode_text">Sélectionnez le micro principal d\'ORII</string>
+    <string name="setting_swap_mic_mode_title">Intervertir le micro</string>
+    <string name="status_bar_notification_info_overflow">999+</string>
+    <string name="switch_3d">3D</string>
+    <string name="switch_bass">Renforcement des basses</string>
+    <string name="switch_presets">Presets</string>
+    <string name="tab_alerts">Alertes</string>
+    <string name="tab_help">Aide</string>
+    <string name="tab_home">Accueil</string>
+    <string name="tab_settings">Paramètres</string>
+    <string name="text_no">Non</string>
+    <string name="text_unavailable">Indisponible</string>
+    <string name="text_view_separator"> - </string>
+    <string name="text_yes">Oui</string>
+    <string name="tilt1_name">Tilt1</string>
+    <string name="tilt2_name">Titl2</string>
+    <string name="toast_battery_not_supported">Le service batterie n\'est pas pris en charge</string>
+    <string name="toast_connection_error_failed">La connexion a échoué</string>
+    <string name="toast_connection_error_lost">La connexion à l\'appareil a été perdue</string>
+    <string name="toast_connection_error_unknown">Erreur de connexion inconnue</string>
+    <string name="toast_device_information">L\'appareil est </string>
+    <string name="toast_find_me_failed">Échec de l\'envoi de l\'alerte</string>
+    <string name="toast_find_me_not_supported">Le profil Find Me n\'est pas pris en charge</string>
+    <string name="toast_gaia_not_supported">Le service Gaia n\'est pas pris en charge</string>
+    <string name="toast_heart_rate_not_supported">Le profil Heart Rate n\'est pas pris en charge</string>
+    <string name="toast_not_connected">Appareil non connecté</string>
+    <string name="toast_not_implemented">Pas encore implémenté</string>
+    <string name="toast_proximity_not_supported">Le profil Proximity n\'est pas pris en charge</string>
+    <string name="toast_proximity_threshold_not_in_range">Le seuil faible doit être inférieur au seuil fort</string>
+    <string name="toast_remote_control_not_supported">La fonction télécommande n\'est pas prise en charge</string>
+    <string name="tts_call_from">Appel entrant de %1$s</string>
     <string name="tts_message_all_day">Toute la journée</string>
     <string name="tts_message_cleared">Messages effacés</string>
-    <string name="tts_message_ending" />
+    <string name="tts_message_ending"></string>
     <string name="tts_message_said">a dit</string>
-    <string name="tts_no_new_messages">Aucun nouveau message</string>
-    <string name="tts_test_message">Bonjour, je suis ori. Je suis un anneau assistant vocal qui transforme votre main en téléphone. Grâce à la conduction osseuse, j'envoie des vibrations à travers votre doigt afin que seule vous puissiez entendre ma voix. Je dispose également d'un microphone pour que vous puissiez contrôler votre téléphone uniquement avec votre voix. Appuyez simplement sur le bouton pendant une seconde pour appeler votre assistant vocal.</string>
+    <string name="tts_no_new_messages">Pas de nouveaux messages</string>
+    <string name="tts_test_message">Salut, je suis Orii. Je suis une bague à assistant vocal qui transforme votre main en téléphone. Grâce à la conduction osseuse, j\'envoie des vibrations à travers votre doigt pour que vous seul puissiez entendre ma voix. J\'ai aussi un micro pour contrôler votre téléphone simplement avec votre voix. Maintenez le bouton enfoncé une seconde pour appeler votre assistant vocal.</string>
 
-    <!-- ================================================== -->
-    <!-- Tutoriels et séquences d’onboarding               -->
-    <!-- ================================================== -->
     <string name="tutorial_back">&lt; RETOUR</string>
-    <string name="tutorial_back_explain">RETOUR À LA DIAPOSITIVE PRÉCÉDENTE</string>
+    <string name="tutorial_back_explain">REVENIR À LA
+DIAPOSITIVE PRÉCÉDENTE</string>
     <string name="tutorial_call_va_complete">TERMINÉ</string>
-    <string name="tutorial_call_va_intro">Appuyez une fois, attendez le bip, puis énoncez vos commandes :
-Appelez James
-Quel temps fait-il aujourd'hui ?
-Whatsapp James, dites que je suis en route</string>
-    <string name="tutorial_call_va_title_text">APPEL DE L'ASSISTANT VOCAL</string>
-    <string name="tutorial_close_ear_intro">Utilisez la position indiquée sur votre index pour fermer votre conduit auditif.</string>
-    <string name="tutorial_complete_1">Séquence tutoriel pour débutants terminée</string>
-    <string name="tutorial_complete_2">Vous pouvez toujours réouvrir ce tutoriel sous la section</string>
-    <string name="tutorial_complete_3">Vous pouvez également en savoir plus en sélectionnant 'Tutoriel supplémentaire' dans la section Aide.</string>
-    <string name="tutorial_pair_later_2">Vous pouvez toujours rouvrir ce tutoriel dans la section Aide.</string>
-    <string name="tutorial_complete_4">Retour à l'application...</string>
+    <string name="tutorial_call_va_intro"> Appuyez une seule fois, attendez le bip, puis donnez vos commandes :
+
+ Appeler James
+ Quel temps fait-il aujourd\'hui ?
+ WhatsApp à James : \'Je suis en route\' </string>
+    <string name="tutorial_call_va_title_text">APPELER L’ASSISTANT VOCAL</string>
+    <string name="tutorial_close_ear_intro">Utilisez la position indiquée sur votre index pour obstruer votre canal auditif.</string>
+    <string name="tutorial_complete_1">Tutoriel d\'initiation terminé</string>
+    <string name="tutorial_complete_2">Vous pouvez toujours rouvrir ce tutoriel dans la section "Aide"</string>
+    <string name="tutorial_complete_3">Vous pouvez également en apprendre plus en sélectionnant "Tutoriel supplémentaire" dans la section "Aide".</string>
+    <string name="tutorial_complete_4">Retour à l\'application…</string>
     <string name="tutorial_connection_state_connected">Connecté à ORII.</string>
-    <string name="tutorial_connection_state_connecting">Connexion à ORII en cours...</string>
-    <string name="tutorial_connection_state_disconnected">En attente d'appairage...</string>
-    <string name="tutorial_find_the_fit_title_text">TROUVER LA TAILLE IDÉALE</string>
-    <string name="tutorial_find_the_sweet_spot_title_text">TROUVER LE POINT PARFAIT</string>
-    <string name="tutorial_gesture_angles_intro">L'angle de vos tapotements détermine les commandes d'action. Assurez-vous que l'angle est correct pour une meilleure reconnaissance.</string>
-    <string name="tutorial_gesture_angles_title_text">TOUT EST UNE QUESTION D'ANGLES</string>
-    <string name="tutorial_gesture_custom_command_1_intro">Tapez deux fois sur toute surface orientée vers le sol pour déclencher un geste de votre choix. Sélectionnez votre commande personnalisée dans le menu des paramètres des gestes.</string>
+    <string name="tutorial_connection_state_connecting">Connexion à ORII…</string>
+    <string name="tutorial_connection_state_disconnected">En attente d\'appairage…</string>
+    <string name="tutorial_find_the_fit_title_text">TROUVER LA BONNE TAILLE</string>
+    <string name="tutorial_find_the_sweet_spot_title_text">TROUVER LE POINT IDÉAL</string>
+    <string name="tutorial_gesture_angles_intro"> L\'angle de vos tapotements détermine les commandes.
+
+ Assurez-vous d\'avoir le bon angle pour une meilleure reconnaissance. </string>
+    <string name="tutorial_gesture_angles_title_text">TOUT EST DANS L\'ANGLE</string>
+    <string name="tutorial_gesture_custom_command_1_intro"> Tapotez deux fois sur n\'importe quelle surface orientée vers le sol pour déclencher un geste de votre choix.
+
+ Sélectionnez votre contrôle personnalisé dans la section \'gestes\' du menu des paramètres. </string>
     <string name="tutorial_gesture_custom_command_1_title_text">Commande personnalisée (1)</string>
-    <string name="tutorial_gesture_custom_command_2_intro">En tapotant trois fois à plat, vous pouvez également déclencher un geste de votre choix. Sélectionnez votre commande personnalisée dans le menu des paramètres des gestes.</string>
+    <string name="tutorial_gesture_custom_command_2_intro"> Avec le triple tap à plat, vous pouvez également déclencher un geste de votre choix.
+
+ Sélectionnez votre contrôle personnalisé dans la section \'gestes\' du menu des paramètres. </string>
     <string name="tutorial_gesture_custom_command_2_title_text">Commande personnalisée (2)</string>
-    <string name="tutorial_gesture_message_readout_intro">Tapez deux fois à plat sur votre poignet ou sur une surface plane, puis portez votre doigt jusqu'à votre point idéal sur l'oreille.</string>
-    <string name="tutorial_gesture_message_readout_title_text">LECTURE DES MESSAGES</string>
-    <string name="tutorial_gesture_play_pause_music_intro">Tapez deux fois à un angle de 90° (de côté) sur votre poitrine ou votre pouce pour activer la lecture ou la pause de la musique. Assurez-vous que votre lecteur de musique préféré est ouvert et défini par défaut.</string>
-    <string name="tutorial_gesture_play_pause_music_title_text">LECTURE/PAUSE DE LA MUSIQUE</string>
-    <string name="tutorial_gesture_skip_track_intro">Tapez deux fois à un angle de 180° (vers le bas) sur votre jambe ou votre pouce pour passer à la chanson suivante. Assurez-vous que votre lecteur de musique préféré est ouvert et défini par défaut.</string>
-    <string name="tutorial_gesture_skip_track_title_text">PASSER LA CHANSON</string>
-    <string name="tutorial_gesture_voice_assistant_intro">Tapez deux fois à un angle de 0° (vers le haut) sur votre tête ou votre pouce pour activer l'assistant vocal. Essayez-le avec : Quel temps fait-il aujourd'hui ? Parlez-moi d'un rendez-vous idéal pour un vendredi soir.</string>
+    <string name="tutorial_gesture_message_readout_intro">Tapotez deux fois à plat sur votre poignet ou une surface plane, puis remontez votre doigt jusqu\'au point idéal sur votre oreille.</string>
+    <string name="tutorial_gesture_message_readout_title_text">LECTURE DE MESSAGES</string>
+    <string name="tutorial_gesture_play_pause_music_intro"> Tapotez deux fois latéralement (angle de 90°) contre votre poitrine ou votre pouce pour lancer ou mettre en pause la musique.
+
+ Assurez-vous que votre lecteur de musique préféré est ouvert et défini par défaut. </string>
+    <string name="tutorial_gesture_play_pause_music_title_text">LIRE/PAUSER LA MUSIQUE</string>
+    <string name="tutorial_gesture_skip_track_intro"> Tapotez deux fois vers le bas (angle de 180°) sur votre jambe ou votre pouce pour passer la chanson.
+
+ Assurez-vous que votre lecteur de musique préféré est ouvert et défini par défaut. </string>
+    <string name="tutorial_gesture_skip_track_title_text">PASSER LA PISTE</string>
+    <string name="tutorial_gesture_voice_assistant_intro"> Tapotez deux fois vers le haut (angle de 0°) sur votre tête ou votre pouce pour activer l\'assistant vocal.
+
+ Essayez :
+ Quel temps fait-il aujourd\'hui ?
+ Parle-moi d\'un endroit pour un rendez-vous vendredi soir </string>
     <string name="tutorial_gesture_voice_assistant_title_text">ASSISTANT VOCAL</string>
-    <string name="tutorial_im_ready">Je suis prêt(e)</string>
-    <string name="tutorial_main_menu_calling_the_voice_assistant">Appel de l'assistant vocal</string>
-    <string name="tutorial_main_menu_find_the_fit">Trouver la taille idéale</string>
-    <string name="tutorial_main_menu_find_the_sweet_spot">Trouver le point parfait</string>
+    <string name="tutorial_im_ready">Je suis prêt</string>
+    <string name="tutorial_main_menu_calling_the_voice_assistant">Appeler l\'assistant vocal</string>
+    <string name="tutorial_main_menu_find_the_fit">Trouver la bonne taille</string>
+    <string name="tutorial_main_menu_find_the_sweet_spot">Trouver le point idéal</string>
     <string name="tutorial_main_menu_gesture">Geste</string>
-    <string name="tutorial_main_menu_message_readout">Lecture des messages</string>
+    <string name="tutorial_main_menu_message_readout">Lecture de messages</string>
     <string name="tutorial_main_menu_title_text">MENU PRINCIPAL</string>
-    <string name="tutorial_make_sure_orii_on">Assurez-vous qu'ORII est allumé</string>
+    <string name="tutorial_make_sure_orii_on">Assurez-vous qu\'ORII est allumé</string>
     <string name="tutorial_menu">&lt; MENU</string>
     <string name="tutorial_menu_explain">RETOUR AU MENU</string>
-    <string name="tutorial_message_intro">Double-cliquez pour lire tous les messages non lus. Répétez pour arrêter.</string>
-    <string name="tutorial_message_title_text">LECTURE DES MESSAGES</string>
-    <string name="tutorial_new_login_text">Nouvelle connexion : %1$s</string>
+    <string name="tutorial_message_intro"> Appuyez deux fois pour lire tous les messages non lus. Refaites-le pour arrêter. </string>
+    <string name="tutorial_message_title_text">LECTURE DE MESSAGES</string>
+    <string name="tutorial_new_login_text">Nouvelle connexion : %1$s </string>
     <string name="tutorial_next">SUIVANT &gt;</string>
-    <string name="tutorial_next_explain">AVANCEZ VERS LA DIAPOSITIVE SUIVANTE</string>
-    <string name="tutorial_opening_init">Initialisation de la séquence tutoriel...</string>
-    <string name="tutorial_pair_later_1">Retour à l'application...</string>
-    <string name="tutorial_pair_to_orii_later">Appairer avec ORII plus tard</string>
-    <string name="tutorial_right_fit_intro">Trouvez une taille d'anneau qui épouse confortablement votre doigt.</string>
-    <string name="tutorial_rotate_intro">Une fois votre point idéal trouvé, faites pivoter votre index vers votre bouche pour améliorer la captation du micro.</string>
-    <string name="tutorial_screw_intro">Revissez les boulons sur les côtés de l'anneau.</string>
-    <string name="tutorial_tap_the_next_button_to_proceed">APPUYEZ SUR LE BOUTON SUIVANT POUR CONTINUER</string>
-    <string name="tutorial_turn_on_it_is_on">C'EST ALLUMÉ</string>
-    <string name="tutorial_turn_on_orii_intro">Allumez ORII en appuyant sur le bouton des deux côtés pendant 5 secondes.</string>
+    <string name="tutorial_next_explain">PASSER À
+LA DIAPOSITIVE SUIVANTE</string>
+    <string name="tutorial_opening_init">Initialisation de la séquence de tutoriel…</string>
+    <string name="tutorial_pair_later_1">Retour à l\'application…</string>
+    <string name="tutorial_pair_later_2">Vous pouvez toujours rouvrir ce tutoriel dans la section "AIDE".</string>
+    <string name="tutorial_pair_to_orii_later">Appairer ORII plus tard</string>
+    <string name="tutorial_right_fit_intro"> Trouvez une taille de bague qui s\'adapte confortablement à votre doigt. </string>
+    <string name="tutorial_rotate_intro">Une fois que vous avez trouvé votre point idéal, vous pouvez faire pivoter votre index vers votre bouche pour améliorer la qualité de capture du micro.</string>
+    <string name="tutorial_screw_intro"> Revissez les boulons sur les côtés de la bague. </string>
+    <string name="tutorial_tap_the_next_button_to_proceed">APPUYEZ SUR LE BOUTON SUIVANT
+POUR CONTINUER</string>
+    <string name="tutorial_turn_on_it_is_on">C\'EST ALLUMÉ</string>
+    <string name="tutorial_turn_on_orii_intro">Allumez ORII en maintenant enfoncés les deux boutons pendant 5 secondes.</string>
     <string name="tutorial_turn_on_orii_title_text">ALLUMER ORII</string>
-    <string name="tutorial_unlock_intro">Détachez l'anneau du corps.</string>
-    <string name="tutorial_unscrew_intro">Dévissez les boulons sur les côtés de l'anneau.</string>
-    <string name="tutorial_using_orii_intro" formatted="false">Faites glisser votre doigt autour de votre oreille pour trouver votre point idéal offrant le son le plus clair ; nous recommandons d'ajuster le volume selon votre environnement. Nous réglons généralement le volume à 50–70 % en intérieur calme et à 80–100 % dans un environnement bruyant.</string>
-    <string name="tutorial_using_orii_sound_is_clear">LE SON EST CLAIR</string>
-    <string name="tutorial_welcome_message">Félicitations pour l'acquisition de l'anneau ORII. Nous allons maintenant appairer votre ORII, trouver la bonne taille d'anneau, apprendre à écouter avec ORII, utiliser l'assistant vocal et lire les messages. Prêt à utiliser ORII ?</string>
-    <string name="tutorial_welcome_text">Bienvenue, %1$s</string>
+    <string name="tutorial_unlock_intro"> Déverrouillez la bague de son support. </string>
+    <string name="tutorial_unscrew_intro"> Dévissez les boulons sur les côtés de la bague. </string>
+    <string name="tutorial_using_orii_intro" formatted="false"> Déplacez votre doigt autour de votre oreille pour trouver le spot idéal où le son est le plus clair.
 
-    <!-- ================================================== -->
-    <!-- Paramètres audio / TWS                             -->
-    <!-- ================================================== -->
+ Nous vous recommandons d\'ajuster le volume en fonction de l\'environnement. En général, on règle à 50-70 % dans un endroit calme et à 80-100 % en milieu bruyant. </string>
+    <string name="tutorial_using_orii_sound_is_clear">LE SON EST CLAIR</string>
+    <string name="tutorial_welcome_message">Félicitations pour l\'acquisition d\'une bague ORII.
+
+Nous allons maintenant l\'appairer, trouver la bonne taille de bague, apprendre comment écouter avec ORII, appeler l\'assistant vocal et lire les messages avec ORII.
+
+Prêt à utiliser ORII ?</string>
+    <string name="tutorial_welcome_text">Bienvenue,
+ %1$s </string>
+
     <string name="tws_left_channel">Canal gauche</string>
-    <string name="tws_master">Haut-parleur principal</string>
+    <string name="tws_master">Haut-parleur maître</string>
     <string name="tws_mono">Mono</string>
     <string name="tws_right_channel">Canal droit</string>
-    <string name="tws_slave">Haut-parleur secondaire</string>
+    <string name="tws_slave">Haut-parleur esclave</string>
     <string name="tws_stereo">Stéréo</string>
 
-    <!-- ================================================== -->
-    <!-- Mise à jour et Upgrade                             -->
-    <!-- ================================================== -->
-    <string name="update_battery_hint">La batterie de votre ORII est trop faible pour effectuer la mise à jour. Veuillez le charger avant de réessayer.</string>
+    <string name="update_battery_hint">La batterie de votre ORII est trop faible pour la mise à jour
+Veuillez le charger avant de réessayer</string>
     <string name="update_battery_retry">Réessayer</string>
     <string name="update_info_bug_fixes">Corrections de bugs</string>
     <string name="update_info_continue_to_update">CONTINUER LA MISE À JOUR →</string>
     <string name="update_info_new_features">Nouvelles fonctionnalités</string>
-    <string name="update_reminder_1">1. Ne chargez pas et n'éteignez pas ORII jusqu'à la fin de la mise à jour.</string>
-    <string name="update_reminder_2">2. La mise à jour peut prendre environ 10 à 15 minutes.</string>
-    <string name="update_reminder_3">3. Gardez ORII à proximité de ce téléphone jusqu'à la fin de la mise à jour.</string>
-    <string name="update_reminder_update_orii">METTRE À JOUR ORII →</string>
+    <string name="update_reminder_1">1. NE PAS charger/éteindre ORII avant la fin de la mise à jour.</string>
+    <string name="update_reminder_2">2. La mise à jour peut prendre environ 10–15 minutes.</string>
+    <string name="update_reminder_3">3. Gardez ORII près de ce téléphone jusqu\'à la fin de la mise à jour.</string>
+    <string name="update_reminder_update_orii">METTRE ORII À JOUR →</string>
     <string name="update_title_update_details">DÉTAILS DE LA MISE À JOUR</string>
     <string name="update_title_updating">MISE À JOUR EN COURS</string>
-    <string name="update_updating_hint_do_not_touch">NE TOUCHEZ PAS à votre ORII</string>
-    <string name="update_updating_hint_up_to_date">Bravo ! Tout est à jour.</string>
+    <string name="update_updating_hint_do_not_touch"> NE touchez pas votre ORII </string>
+    <string name="update_updating_hint_up_to_date">Hourra ! Tout est à jour.</string>
     <string name="update_updating_return">RETOUR →</string>
     <string name="update_updating_status_progress">%1$s terminé</string>
-    <string name="update_updating_status_restarting">Redémarrage...</string>
-    <string name="update_updating_status_success">Réussi</string>
-
+    <string name="update_updating_status_restarting">Redémarrage…</string>
+    <string name="update_updating_status_success">Succès</string>
 </resources>

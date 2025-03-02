@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Dimensions personnalisées ajoutées -->
+    <dimen name="padding_button">16dp</dimen>
+    <dimen name="button_corner_radius">4dp</dimen>
+
+    <!-- ========================================================= -->
+    <!-- Dimensions existantes                                    -->
+    <!-- ========================================================= -->
     <dimen name="abc_action_bar_content_inset_material">16dp</dimen>
     <dimen name="abc_action_bar_content_inset_with_nav">72dp</dimen>
     <dimen name="abc_action_bar_default_height_material">56dp</dimen>
