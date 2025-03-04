@@ -1,24 +1,30 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Permissions nécessaires -->
+    <!-- Permissions nécessaires pour le Bluetooth et la localisation -->
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.INTERNET" />
-    <!-- Ajout pour les notifications (optionnel, à retirer si non utilisé) -->
+    <!-- Suppression de la permission INTERNET, l'app étant autonome -->
+    <!-- <uses-permission android:name="android.permission.INTERNET" /> -->
+    <!-- Permission pour poster des notifications (à conserver si l'app envoie des notifications locales) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Fonctionnalités Bluetooth (recommandé pour préciser l'usage) -->
+    <!-- Fonctionnalités Bluetooth requises -->
     <uses-feature android:name="android.hardware.bluetooth" android:required="true" />
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true" />
 
     <application
-        android:name=".OriiApplication"
+        android:name=".MainApplication"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme">
+
+        <!-- Déclaration du service principal de l'application -->
+        <service
+            android:name=".services.AppService"
+            android:exported="false" />
 
         <!-- MainActivity lancée au démarrage -->
         <activity

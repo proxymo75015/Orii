@@ -1,32 +1,38 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.origamilabs.orii.core.bluetooth.manager
 
 import android.annotation.SuppressLint
+import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattDescriptor
-import android.bluetooth.BluetoothGattService
+import android.content.Context
 import android.content.Intent
-import android.os.Handler
-import android.os.Looper
-import android.util.Log
-import com.facebook.stetho.dumpapp.Framer
-import com.origamilabs.orii.api.Config
-import com.origamilabs.orii.api.request.OriiRequest
+import com.origamilabs.orii.core.bluetooth.BluetoothService
 import com.origamilabs.orii.core.bluetooth.connection.GattHandler
-import dagger.hilt.android.scopes.ActivityRetainedScoped
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import timber.log.Timber
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class CommandManager @Inject constructor(
+    @ApplicationContext context: Context,
+    bluetoothManager: android.bluetooth.BluetoothManager,
+    bluetoothAdapter: BluetoothAdapter,
+    bluetoothService: BluetoothService,
     private val connectionManager: ConnectionManager
-) : BaseManager() {
+) : BaseManager(context, bluetoothManager, bluetoothAdapter, bluetoothService) {
 
     companion object {
         private const val TAG = "CommandManager"
+
+        // Actions destinées à l'interface utilisateur (ces constantes servent à déclencher des actions via des Intent)
         const val ACTION_BATTERY_LEVEL = "com.origamilabs.orii.ACTION_BATTERY_LEVEL"
         const val ACTION_CHECK_GESTURE_MODE = "com.origamilabs.orii.ACTION_CHECK_GESTURE_MODE"
         const val ACTION_CHECK_LANGUAGE = "com.origamilabs.orii.ACTION_CHECK_LANGUAGE"
@@ -45,28 +51,50 @@ class CommandManager @Inject constructor(
         const val ACTION_VOICE_ASSISTANT_STATE_CHANGED = "com.origamilabs.orii.ACTION_VOICE_ASSISTANT_STATE_CHANGED"
         const val EXTRA_DATA = "com.origamilabs.orii.EXTRA_DATA"
 
+        // UUID et constantes techniques
         private val ORII_PROFILE_UUID = UUID.fromString("0000FFF0-0000-1000-8000-00805F9B34FB")
         private val ORII_NOTIFY_1_UUID = UUID.fromString("0000FFF4-0000-1000-8000-00805F9B34FB")
         private val ORII_WRITE_UUID = UUID.fromString("0000FFF6-0000-1000-8000-00805F9B34FB")
         private val CLIENT_CHARACTERISTIC_CONFIG_UUID =
             UUID.fromString("00002902-0000-1000-8000-00805F9B34FB")
+
+        // Remplacement de Framer.STDOUT_FRAME_PREFIX par une constante locale
+        private const val CUSTOM_STDOUT_FRAME_PREFIX: Byte = 0x10
+
+        // Codes de commande
+        private const val CMD_BATTERY_LEVEL: Byte = 7
+        private const val CMD_FIRMWARE_VERSION: Byte = 8
+        private const val CMD_CHECK_MIC_MODE: Byte = 48
+        private const val CMD_SWITCH_TEST_MODE: Byte = -112
+        private const val CMD_CHANGE_LANGUAGE: Byte = 55
+        private const val CMD_ALLOW_LINE_PHONECALL_PICKUP: Byte = 56
+        private const val CMD_CHANGE_GESTURE_MODE: Byte = 57
+        private const val CMD_CHANGE_SENSITIVITY: Byte = 58
+        private const val CMD_MESSAGE_RECEIVED: Byte = 3
+
+        // En-tête et pied de paquet
+        private const val HEADER: Byte = -86
+        private const val END: Byte = -1
+
+        // Intervalles de temps
+        private const val FIXED_TASK_INTERVAL = 30000L
+        private const val UNFIXED_TASK_INTERVAL = 1000L
+        private const val INITIAL_DELAY = 1000L
+        private const val WINDOWING_DELAY = 5000L
     }
 
-    // Propriétés Bluetooth et état
     private var batteryLevel: Int = 0
     private var firmwareVersion: Int = 0
     private var bluetoothGatt: BluetoothGatt? = null
     private var gattHandler: GattHandler? = null
     private var notifyCharacteristic: BluetoothGattCharacteristic? = null
     private var writeCharacteristic: BluetoothGattCharacteristic? = null
-    private var isWritingCharacteristicToDevice: Boolean = false
+    private var isWritingCharacteristic = false
 
-    // Utilisation de channels pour les tâches fixes et non fixes
     private val fixedTaskChannel = Channel<() -> Unit>(Channel.UNLIMITED)
     private val unfixedTaskChannel = Channel<() -> Unit>(Channel.UNLIMITED)
-
-    // Création d'un scope dédié aux tâches
     private val taskScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     private var fixedTaskJob: Job? = null
     private var unfixedTaskJob: Job? = null
 
@@ -82,20 +110,86 @@ class CommandManager @Inject constructor(
         override fun onHeadsetStateChange(prevState: Int, newState: Int) {}
         override fun onOriiRemoveBond() {}
         override fun onOriiStateChange(prevState: Int, newState: Int) {
-            if (newState == 2) {
-                putCallCheckLanguageTask()
-                putCallBatteryLevelTaskToUnfixedChannel()
-                putCallFirmwareVersionTaskToUnfixedChannel()
-                putCallVoiceAssistantCounterTask()
-                putCallCheckMicModeTask()
-                putCallCheckTestModeTask()
+            if (newState == ConnectionManager.STATE_CONNECTED) {
+                scheduleCheckLanguageTask()
+                scheduleBatteryLevelTaskUnfixed()
+                scheduleFirmwareVersionTaskUnfixed()
+                scheduleVoiceAssistantCounterTask()
+                scheduleCheckMicModeTask()
+                scheduleSwitchTestModeTask()
             }
         }
     }
 
     private var windowing = false
 
-    override fun onInitialize(): Boolean = false
+    override fun onInitialize(): Boolean {
+        // Initialisation spécifique si nécessaire
+        return true
+    }
+
+    override fun start() {
+        // La méthode start() par défaut n'est pas utilisée.
+    }
+
+    @SuppressLint("MissingPermission")
+    fun start(gattHandler: GattHandler, bluetoothGatt: BluetoothGatt) {
+        this.gattHandler = gattHandler
+        this.bluetoothGatt = bluetoothGatt
+        connectionManager.addCallback(connectionCallback)
+        val service = bluetoothGatt.getService(ORII_PROFILE_UUID)
+        if (service == null) {
+            Timber.d("Service de profil non trouvé")
+            gattHandler.disconnect()
+            return
+        }
+        writeCharacteristic = service.getCharacteristic(ORII_WRITE_UUID)
+        notifyCharacteristic = service.getCharacteristic(ORII_NOTIFY_1_UUID)
+        setCharacteristicNotification(notifyCharacteristic, true)
+        startTaskSchedulers()
+    }
+
+    private fun startTaskSchedulers() {
+        fixedTaskJob?.cancel()
+        unfixedTaskJob?.cancel()
+        fixedTaskJob = taskScope.launch {
+            delay(INITIAL_DELAY)
+            while (isActive) {
+                if (fixedTaskChannel.isEmpty) {
+                    scheduleBatteryLevelTaskFixed()
+                    scheduleFirmwareVersionTaskFixed()
+                }
+                if (!isWritingCharacteristic) {
+                    fixedTaskChannel.receive().invoke()
+                }
+                Timber.d("Tâche fixe envoyée")
+                delay(FIXED_TASK_INTERVAL)
+            }
+        }
+        unfixedTaskJob = taskScope.launch {
+            delay(INITIAL_DELAY)
+            while (isActive) {
+                if (!isWritingCharacteristic && !unfixedTaskChannel.isEmpty) {
+                    unfixedTaskChannel.receive().invoke()
+                }
+                Timber.d("Tâche variable envoyée")
+                delay(UNFIXED_TASK_INTERVAL)
+            }
+        }
+    }
+
+    override fun onClose() {
+        Timber.d("Fermeture de CommandManager")
+        batteryLevel = -1
+        firmwareVersion = -1
+        gattHandler = null
+        connectionManager.removeCallback(connectionCallback)
+        fixedTaskJob?.cancel()
+        unfixedTaskJob?.cancel()
+        taskScope.cancel()
+        fixedTaskChannel.cancel()
+        unfixedTaskChannel.cancel()
+    }
 
     fun addCallback(callback: Callback) {
         if (!callbacks.contains(callback)) callbacks.add(callback)
@@ -109,412 +203,259 @@ class CommandManager @Inject constructor(
     fun getFirmwareVersion() = firmwareVersion
 
     @SuppressLint("MissingPermission")
-    fun start(gattHandler: GattHandler, bluetoothGatt: BluetoothGatt) {
-        this.gattHandler = gattHandler
-        this.bluetoothGatt = bluetoothGatt
-        connectionManager.addCallback(connectionCallback)
-        val service: BluetoothGattService? = bluetoothGatt.getService(ORII_PROFILE_UUID)
-        if (service == null) {
-            Log.d(TAG, "profileService is null")
-            gattHandler.disconnect()
-            return
-        }
-        Log.d(TAG, "profileService: $service")
-        writeCharacteristic = service.getCharacteristic(ORII_WRITE_UUID)
-        notifyCharacteristic = service.getCharacteristic(ORII_NOTIFY_1_UUID)
-        setCharacteristicNotification(notifyCharacteristic, true)
-        startTaskSchedulers()
-    }
-
-    /**
-     * Démarre les coroutines qui gèrent l'exécution périodique des tâches.
-     */
-    private fun startTaskSchedulers() {
-        fixedTaskJob?.cancel()
-        unfixedTaskJob?.cancel()
-        // Tâches fixes : tous les 30 secondes (après un délai initial)
-        fixedTaskJob = taskScope.launch {
-            delay(1000L)
-            while (isActive) {
-                if (fixedTaskChannel.isEmpty) {
-                    putCallBatteryLevelTaskToFixedChannel()
-                    putCallFirmwareVersionTaskToFixedChannel()
-                }
-                if (!isWritingCharacteristicToDevice) {
-                    // Exécute la prochaine tâche fixe (suspend jusqu'à réception)
-                    val task = fixedTaskChannel.receive()
-                    task.invoke()
-                }
-                Log.d(TAG, "Dispatch fixed task")
-                delay(30000L)
-            }
-        }
-        // Tâches non fixes : toutes les secondes
-        unfixedTaskJob = taskScope.launch {
-            delay(1000L)
-            while (isActive) {
-                if (!isWritingCharacteristicToDevice && !unfixedTaskChannel.isEmpty) {
-                    val task = unfixedTaskChannel.receive()
-                    task.invoke()
-                }
-                Log.d(TAG, "Dispatch unfixed task")
-                delay(1000L)
-            }
-        }
-    }
-
-    override fun close() {
-        Log.d(TAG, "close()")
-        batteryLevel = -1
-        firmwareVersion = -1
-        gattHandler = null
-        connectionManager.removeCallback(connectionCallback)
-        fixedTaskJob?.cancel()
-        unfixedTaskJob?.cancel()
-        taskScope.cancel()
-        // Ferme les channels
-        fixedTaskChannel.cancel()
-        unfixedTaskChannel.cancel()
-    }
-
-    fun getColorCode(code: Int): Byte {
-        val result = when (code) {
-            1 -> 1
-            2 -> 2
-            3 -> 3
-            4 -> 4
-            5 -> 5
-            else -> 0
-        }.toByte()
-        Log.d(TAG, "Color code: ${String.format("0x%02X", result)}")
-        return result
-    }
-
-    fun getVibrationCode(code: Int): Byte {
-        val result = when (code) {
-            0 -> 0
-            1 -> 1
-            2 -> 2
-            3 -> 3
-            4 -> 4
-            else -> 1
-        }.toByte()
-        Log.d(TAG, "Vibration code: ${String.format("0x%02X", result)}")
-        return result
-    }
-
-    @SuppressLint("MissingPermission")
-    @Synchronized
+    @Suppress("DEPRECATION")
     fun writeCharacteristic(bytes: ByteArray): Boolean {
-        isWritingCharacteristicToDevice = true
-        return if (getBluetoothAdapter() != null && bluetoothGatt != null) {
-            val sb = bytes.joinToString(" ") { String.format("0x%02X", it) }
-            Log.d(TAG, "Written characteristic: $sb")
-            writeCharacteristic?.value = bytes
+        isWritingCharacteristic = true
+        return if (bluetoothGatt != null) {
+            val hexString = bytes.joinToString(" ") { String.format("0x%02X", it) }
+            Timber.d("Écriture de la caractéristique : $hexString")
+            writeCharacteristic?.setValue(bytes)
             val result = bluetoothGatt!!.writeCharacteristic(writeCharacteristic)
-            Log.d(TAG, "writeCharacteristic result: $result")
-            isWritingCharacteristicToDevice = false
+            Timber.d("Résultat de l'écriture : $result")
+            isWritingCharacteristic = false
             result
         } else {
-            Log.w(TAG, "BluetoothAdapter not initialized")
-            isWritingCharacteristicToDevice = false
+            Timber.w("BluetoothGatt non initialisé")
+            isWritingCharacteristic = false
             false
         }
     }
 
     @SuppressLint("MissingPermission")
+    @Suppress("DEPRECATION")
     fun setCharacteristicNotification(characteristic: BluetoothGattCharacteristic?, enabled: Boolean) {
-        if (getBluetoothAdapter() == null || bluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized")
+        if (bluetoothGatt == null) {
+            Timber.w("BluetoothGatt non initialisé")
             return
         }
         bluetoothGatt!!.setCharacteristicNotification(characteristic, enabled)
-        val descriptor = characteristic?.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG_UUID)
-        descriptor?.value = if (enabled)
-            BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
-        else
-            BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
-        bluetoothGatt!!.writeDescriptor(descriptor)
+        characteristic?.getDescriptor(CLIENT_CHARACTERISTIC_CONFIG_UUID)?.apply {
+            value = if (enabled)
+                BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
+            else
+                BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+            bluetoothGatt!!.writeDescriptor(this)
+        }
     }
 
     @SuppressLint("MissingPermission")
     fun sendCommand(cmd: Byte, length: Byte, data: ByteArray?): Boolean {
-        val packet = ByteArray((length + 4).toInt()).apply {
-            this[0] = (-86).toByte()
+        val packetLength = length.toInt() + 4
+        val packet = ByteArray(packetLength).apply {
+            this[0] = HEADER
             this[1] = cmd
             this[2] = length
-            this[this.size - 1] = (-1).toByte()
+            this[this.lastIndex] = END
             data?.let { System.arraycopy(it, 0, this, 3, length.toInt()) }
         }
         return writeCharacteristic(packet)
     }
 
     @SuppressLint("MissingPermission")
-    fun callback(characteristic: BluetoothGattCharacteristic) {
+    @Suppress("DEPRECATION")
+    fun handleNotification(characteristic: BluetoothGattCharacteristic) {
+        @Suppress("DEPRECATION")
         val value = characteristic.value
         if (value.size <= 4) return
         val header = value[0]
         val cmd = value[1]
         val len = value[2]
-        val payload = value.copyOfRange(3, ((len.toInt() + 3) and 0xFF))
-        val end = value[((len.toInt() and 0xFF) + 3)]
-        val sb = value.joinToString(" ") { String.format("%02X", it) }
-        Log.d(TAG, "${characteristic.uuid} data: $sb")
-        Log.d(TAG, "Header: ${String.format("0x%02X", header)} End: ${String.format("0x%02X", end)}")
-        if (header != (-86).toByte() || end != (-1).toByte()) {
-            Log.e(TAG, "GATT_FAILURE")
+        val payload = value.copyOfRange(3, len.toInt() + 3)
+        val end = value[len.toInt() + 3]
+        val hexString = value.joinToString(" ") { String.format("%02X", it) }
+        Timber.d("Données reçues de ${characteristic.uuid} : $hexString")
+        if (header != HEADER || end != END) {
+            Timber.e("Format de paquet invalide")
         } else {
-            handleCommand(cmd, payload)
+            processCommand(cmd, payload)
         }
     }
 
-    private fun handleCommand(cmd: Byte, payload: ByteArray) {
+    private fun processCommand(cmd: Byte, payload: ByteArray) {
         val intent = Intent()
         when (cmd) {
             (-112).toByte() -> {
-                Log.d(TAG, "changed test mode to : ${String.format("0x%02X", payload[0])} : ${payload[0].toInt()}")
+                Timber.d("Mode test modifié : ${payload.firstOrNull()?.let { String.format("0x%02X", it) }}")
             }
             (-108).toByte() -> {
-                val testMode = payload[0].toInt()
-                Log.d(TAG, "test mode is : ${String.format("0x%02X", payload[0])} : $testMode")
-                if (testMode == 2) {
-                    putCallSwitchTestModeTask()
-                }
+                val testMode = payload.firstOrNull()?.toInt() ?: 0
+                Timber.d("Mode test : $testMode")
+                if (testMode == 2) scheduleSwitchTestModeTask()
             }
             64.toByte() -> {
                 intent.action = ACTION_GESTURE_SIDE_DOUBLE_TAP
-                Log.d(TAG, "Side double tap trigger ORII gesture")
+                Timber.d("Geste : double tap latéral")
             }
-            7.toByte() -> {
-                val batLevel = payload[0].toInt()
-                Log.d(TAG, "battery level: ${String.format("0x%02X", payload[0])} : $batLevel")
-                batteryLevel = batLevel
+            CMD_BATTERY_LEVEL -> {
+                val level = payload.firstOrNull()?.toInt() ?: 0
+                batteryLevel = level
                 intent.action = ACTION_BATTERY_LEVEL
-                intent.putExtra(EXTRA_DATA, batLevel)
+                intent.putExtra(EXTRA_DATA, level)
+                Timber.d("Niveau de batterie : $level")
             }
-            8.toByte() -> {
-                val fwVersion = payload[0].toInt()
-                Log.d(TAG, "firmware version: ${String.format("0x%02X", payload[0])} : $fwVersion")
-                firmwareVersion = fwVersion
+            CMD_FIRMWARE_VERSION -> {
+                val fw = payload.firstOrNull()?.toInt() ?: 0
+                firmwareVersion = fw
                 intent.action = ACTION_FIRMWARE_VERSION
-                intent.putExtra(EXTRA_DATA, fwVersion)
+                intent.putExtra(EXTRA_DATA, fw)
+                Timber.d("Version firmware : $fw")
             }
-            48.toByte() -> {
-                val micMode = payload[0].toInt()
+            CMD_CHECK_MIC_MODE -> {
+                val micMode = payload.firstOrNull()?.toInt() ?: 0
                 intent.action = ACTION_CHECK_MIC_MODE
                 intent.putExtra(EXTRA_DATA, micMode)
-                Log.d(TAG, "mic mode is : ${String.format("0x%02X", payload[0])} : $micMode")
+                Timber.d("Mode micro : $micMode")
             }
             49.toByte() -> {
-                val newMicMode = payload[0].toInt()
+                val newMicMode = payload.firstOrNull()?.toInt() ?: 0
                 intent.action = ACTION_MIC_MODE_CHANGED
                 intent.putExtra(EXTRA_DATA, newMicMode)
-                Log.d(TAG, "mic mode changed to : ${String.format("0x%02X", payload[0])} : $newMicMode")
+                Timber.d("Changement de mode micro : $newMicMode")
             }
             51.toByte() -> {
                 intent.action = ACTION_VOICE_ASSISTANT_STATE_CHANGED
-                intent.putExtra(EXTRA_DATA, payload[0].toInt())
-                Log.d(TAG, "Voice assistant start/end : ${String.format("0x%02X", payload[0])} : ${payload[0].toInt()}")
+                intent.putExtra(EXTRA_DATA, payload.firstOrNull()?.toInt() ?: 0)
+                Timber.d("Changement d'état de l'assistant vocal")
             }
             52.toByte() -> {
                 intent.action = ACTION_VOICE_ASSISTANT_COUNTER
-                intent.putExtra(EXTRA_DATA, payload[0].toInt())
-                Log.d(TAG, "Voice assistant counter : ${String.format("0x%02X", payload[0])} : ${payload[0].toInt()}")
+                intent.putExtra(EXTRA_DATA, payload.firstOrNull()?.toInt() ?: 0)
+                Timber.d("Compteur de l'assistant vocal")
             }
             54.toByte() -> {
-                val lang = payload[0].toInt()
+                val lang = payload.firstOrNull()?.toInt() ?: 0
                 intent.action = ACTION_CHECK_LANGUAGE
                 intent.putExtra(EXTRA_DATA, lang)
-                Log.d(TAG, "ORII language is : ${String.format("0x%02X", payload[0])} : $lang")
+                Timber.d("Vérification de la langue : $lang")
             }
             55.toByte() -> {
-                Log.d(TAG, "ORII language is already : ${String.format("0x%02X", payload[0])} : ${payload[0].toInt()}")
+                Timber.d("Langue inchangée : ${payload.firstOrNull()?.toInt()}")
             }
             32.toByte() -> {
                 intent.action = ACTION_SINGLE_BUTTON_PRESSED
-                Log.d(TAG, "Single button pressed")
+                Timber.d("Bouton unique pressé")
             }
             33.toByte() -> {
                 intent.action = ACTION_SINGLE_BUTTON_LONG_PRESSED
-                Log.d(TAG, "Single button long pressed")
+                Timber.d("Bouton unique maintenu")
             }
             34.toByte() -> {
                 intent.action = ACTION_SINGLE_BUTTON_DOUBLE_PRESSED
-                intent.putExtra(EXTRA_DATA, payload[0].toInt())
-                Log.d(TAG, "Single button double pressed")
+                intent.putExtra(EXTRA_DATA, payload.firstOrNull()?.toInt() ?: 0)
+                Timber.d("Bouton unique double pressé")
             }
             35.toByte() -> {
                 intent.action = ACTION_DOUBLE_BUTTON_PRESSED
-                Log.d(TAG, "Double button pressed")
+                Timber.d("Bouton double pressé")
             }
             57.toByte() -> {
-                val gestureMode = payload[0].toInt()
+                val gestureMode = payload.firstOrNull()?.toInt() ?: 0
                 intent.action = ACTION_CHECK_GESTURE_MODE
                 intent.putExtra(EXTRA_DATA, gestureMode)
-                Log.d(TAG, "ORII gesture mode: ${String.format("0x%02X", payload[0])} : $gestureMode")
+                Timber.d("Mode gestuel : $gestureMode")
             }
             58.toByte() -> {
-                val sensitivity = payload[0].toInt()
+                val sensitivity = payload.firstOrNull()?.toInt() ?: 0
                 intent.action = ACTION_CHECK_SENSITIVITY_OF_GESTURE
                 intent.putExtra(EXTRA_DATA, sensitivity)
-                Log.d(TAG, "ORII sensitivity of gesture: ${String.format("0x%02X", payload[0])} : $sensitivity")
+                Timber.d("Sensibilité gestuelle : $sensitivity")
             }
             59.toByte() -> {
-                when (payload[0].toInt()) {
+                when (payload.firstOrNull()?.toInt() ?: -1) {
                     0 -> {
                         intent.action = ACTION_GESTURE_FLAT_TRIPLE_TAP
-                        Log.d(TAG, "Flat triple tap trigger ORII gesture")
+                        Timber.d("Triple tap plat déclenché")
                     }
                     1 -> {
                         intent.action = ACTION_GESTURE_REVERSE_DOUBLE_TAP
-                        Log.d(TAG, "Reverse double tap trigger ORII gesture")
+                        Timber.d("Double tap inverse déclenché")
                     }
-                    else -> {
-                        Log.d(TAG, "Undefined gesture command payload: ${String.format("0x%02X", payload[0])} : ${payload[0].toInt()}")
-                    }
+                    else -> Timber.d("Commande de geste indéfinie")
                 }
             }
-            else -> {
-                Log.d(TAG, "ORII undefined command: ${String.format("0x%02X", payload[0])} : ${payload[0].toInt()}")
-            }
+            else -> Timber.d("Commande indéfinie : ${payload.firstOrNull()?.toInt()}")
         }
         callbacks.forEach { it.onDataReceived(intent) }
     }
 
-    // Fonctions pour envoyer des tâches dans les channels
-
-    private fun putFixedTask(task: () -> Unit) {
-        taskScope.launch {
-            fixedTaskChannel.send(task)
-        }
+    // Exécute la tâche uniquement si la connexion est active.
+    private inline fun executeIfConnected(task: () -> Unit) {
+        if (connectionManager.isOriiConnected()) task.invoke()
     }
 
-    private fun putUnfixedTask(task: () -> Unit) {
-        taskScope.launch {
-            unfixedTaskChannel.send(task)
-        }
+    // Méthodes de planification des tâches
+    private fun scheduleFixedTask(task: () -> Unit) {
+        taskScope.launch { fixedTaskChannel.send(task) }
     }
 
-    // Méthodes existantes de planification de tâches (adaptées aux channels)
-    fun putCallCheckTestModeTask() {
-        putUnfixedTask {
-            if (connectionManager.isOriiConnected()) {
-                sendCommand((-108).toByte(), 0, null)
-            }
-        }
+    private fun scheduleUnfixedTask(task: () -> Unit) {
+        taskScope.launch { unfixedTaskChannel.send(task) }
     }
 
-    fun putCallCheckMicModeTask() {
-        putUnfixedTask {
-            if (connectionManager.isOriiConnected()) {
-                sendCommand(48.toByte(), 0, null)
-            }
-        }
+    fun scheduleCheckLanguageTask() {
+        scheduleUnfixedTask { executeIfConnected { sendCommand(54.toByte(), 0, null) } }
     }
 
-    fun putCallVoiceAssistantCounterTask() {
-        putUnfixedTask {
-            if (connectionManager.isOriiConnected()) {
-                sendCommand(52.toByte(), 0, null)
-            }
-        }
+    fun scheduleBatteryLevelTaskUnfixed() {
+        scheduleUnfixedTask { executeIfConnected { sendCommand(CMD_BATTERY_LEVEL, 0, null) } }
     }
 
-    fun putCallCheckLanguageTask() {
-        putUnfixedTask {
-            if (connectionManager.isOriiConnected()) {
-                sendCommand(54.toByte(), 0, null)
-            }
-        }
+    fun scheduleVoiceAssistantCounterTask() {
+        scheduleUnfixedTask { executeIfConnected { sendCommand(52.toByte(), 0, null) } }
     }
 
-    fun putCallBatteryLevelTaskToFixedChannel() {
-        putFixedTask {
-            if (connectionManager.isOriiConnected()) {
-                sendCommand(7.toByte(), 0, null)
-            }
-        }
+    fun scheduleCheckMicModeTask() {
+        scheduleUnfixedTask { executeIfConnected { sendCommand(CMD_CHECK_MIC_MODE, 0, null) } }
     }
 
-    fun putCallBatteryLevelTaskToUnfixedChannel() {
-        putUnfixedTask {
-            if (connectionManager.isOriiConnected()) {
-                sendCommand(7.toByte(), 0, null)
-            }
-        }
+    private fun scheduleBatteryLevelTaskFixed() {
+        scheduleFixedTask { executeIfConnected { sendCommand(CMD_BATTERY_LEVEL, 0, null) } }
     }
 
-    fun putCallFirmwareVersionTaskToFixedChannel() {
-        putFixedTask {
-            if (connectionManager.isOriiConnected()) {
-                sendCommand(8.toByte(), 0, null)
-            }
-        }
+    private fun scheduleFirmwareVersionTaskFixed() {
+        scheduleFixedTask { executeIfConnected { sendCommand(CMD_FIRMWARE_VERSION, 0, null) } }
     }
 
-    fun putCallFirmwareVersionTaskToUnfixedChannel() {
-        putUnfixedTask {
-            if (connectionManager.isOriiConnected()) {
-                sendCommand(8.toByte(), 0, null)
-            }
-        }
+    fun scheduleFirmwareVersionTaskUnfixed() {
+        scheduleUnfixedTask { executeIfConnected { sendCommand(CMD_FIRMWARE_VERSION, 0, null) } }
     }
 
-    fun putCallSwitchTestModeTask() {
-        putUnfixedTask {
-            if (connectionManager.isOriiConnected()) {
-                sendCommand((-112).toByte(), 0, null)
-            }
-        }
+    private fun scheduleSwitchTestModeTask() {
+        scheduleUnfixedTask { executeIfConnected { sendCommand(CMD_SWITCH_TEST_MODE, 0, null) } }
     }
 
-    // Méthodes ajoutées pour répliquer les fonctionnalités de la version Java
-
-    fun putCallSwitchMicModeTask(micMode: Int) {
-        putUnfixedTask {
+    // Utilise CUSTOM_STDOUT_FRAME_PREFIX pour switchMicMode.
+    fun scheduleSwitchMicModeTask(micMode: Int) {
+        scheduleUnfixedTask {
             val b: Byte = if (micMode == 0) 0 else 1
-            if (connectionManager.isOriiConnected()) {
-                sendCommand(Framer.STDOUT_FRAME_PREFIX.toByte(), 1, byteArrayOf(b))
-            }
+            executeIfConnected { sendCommand(CUSTOM_STDOUT_FRAME_PREFIX, 1, byteArrayOf(b)) }
         }
     }
 
-    fun putCallChangeLanguageTask(langId: Int) {
-        putUnfixedTask {
+    fun scheduleChangeLanguageTask(langId: Int) {
+        scheduleUnfixedTask {
             val b: Byte = if (langId == 0) 0 else 1
-            if (connectionManager.isOriiConnected()) {
-                sendCommand(55.toByte(), 1, byteArrayOf(b))
-            }
+            executeIfConnected { sendCommand(CMD_CHANGE_LANGUAGE, 1, byteArrayOf(b)) }
         }
     }
 
-    fun putCallAllowLinePhonecallPickUpTask() {
-        putUnfixedTask {
-            if (connectionManager.isOriiConnected()) {
-                sendCommand(56.toByte(), 0, null)
-            }
+    fun scheduleAllowLinePhonecallPickUpTask() {
+        scheduleUnfixedTask { executeIfConnected { sendCommand(CMD_ALLOW_LINE_PHONECALL_PICKUP, 0, null) } }
+    }
+
+    fun scheduleChangeGestureModeTask(gestureMode: Int) {
+        scheduleUnfixedTask {
+            executeIfConnected { sendCommand(CMD_CHANGE_GESTURE_MODE, 1, byteArrayOf(gestureMode.toByte())) }
         }
     }
 
-    fun putCallChangeGestureModeTask(gestureMode: Int) {
-        putUnfixedTask {
-            val b: Byte = gestureMode.toByte()
-            if (connectionManager.isOriiConnected()) {
-                sendCommand(57.toByte(), 1, byteArrayOf(b))
-            }
+    fun scheduleChangeSensitivityTask(sensitivity: Int) {
+        scheduleUnfixedTask {
+            executeIfConnected { sendCommand(CMD_CHANGE_SENSITIVITY, 1, byteArrayOf(sensitivity.toByte())) }
         }
     }
 
-    fun putCallChangeSensitivityOfGestureTask(sensitivity: Int) {
-        putUnfixedTask {
-            val b: Byte = sensitivity.toByte()
-            if (connectionManager.isOriiConnected()) {
-                sendCommand(58.toByte(), 1, byteArrayOf(b))
-            }
-        }
-    }
-
-    fun putCallMessageReceivedTask(
+    fun scheduleMessageReceivedTask(
         ledColor: Int,
         vibration: Int,
         secondaryLedColor: Int,
@@ -523,18 +464,44 @@ class CommandManager @Inject constructor(
     ) {
         if (connectionManager.isOriiConnected()) {
             if (this.windowing && windowing) return
-            // Démarrage d'un job pour gérer la période "windowing"
             taskScope.launch {
                 this@CommandManager.windowing = true
-                delay(5000L)
+                delay(WINDOWING_DELAY)
                 this@CommandManager.windowing = false
             }
-            putUnfixedTask {
-                sendCommand(3.toByte(), 2, byteArrayOf(getColorCode(ledColor), getVibrationCode(vibration)))
+            scheduleUnfixedTask {
+                sendCommand(CMD_MESSAGE_RECEIVED, 2, byteArrayOf(getColorCode(ledColor), getVibrationCode(vibration)))
             }
-            putUnfixedTask {
-                sendCommand(3.toByte(), 2, byteArrayOf(getColorCode(secondaryLedColor), getVibrationCode(secondaryVibration)))
+            scheduleUnfixedTask {
+                sendCommand(CMD_MESSAGE_RECEIVED, 2, byteArrayOf(getColorCode(secondaryLedColor), getVibrationCode(secondaryVibration)))
             }
         }
+    }
+
+    // Fonctions de conversion internes
+    private fun getColorCode(code: Int): Byte {
+        val result = when (code) {
+            1 -> 1
+            2 -> 2
+            3 -> 3
+            4 -> 4
+            5 -> 5
+            else -> 0
+        }.toByte()
+        Timber.d("Code couleur : ${String.format("0x%02X", result)}")
+        return result
+    }
+
+    private fun getVibrationCode(code: Int): Byte {
+        val result = when (code) {
+            0 -> 0
+            1 -> 1
+            2 -> 2
+            3 -> 3
+            4 -> 4
+            else -> 1
+        }.toByte()
+        Timber.d("Code vibration : ${String.format("0x%02X", result)}")
+        return result
     }
 }

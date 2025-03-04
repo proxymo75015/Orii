@@ -8,115 +8,90 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.util.Log
 import com.facebook.drawee.backends.pipeline.Fresco
-import com.google.firebase.FirebaseApp
-import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.origamilabs.orii.api.VolleyManager
-import com.origamilabs.orii.core.bluetooth.BluetoothService
-import com.origamilabs.orii.manager.AnalyticsManager
-import com.origamilabs.orii.manager.AppManager
 import com.origamilabs.orii.services.AppService
+import com.origamilabs.orii.core.bluetooth.BluetoothService
 import dagger.hilt.android.HiltAndroidApp
 
 /**
- * Application principale.
+ * Application principale de l’appli ORII.
  */
-@HiltAndroidApp // Nécessaire pour que Hilt fonctionne dans toute l'application
+@HiltAndroidApp
 class MainApplication : Application() {
 
     companion object {
-        /** Indique si l'application est en production. */
         const val IS_PRODUCTION: Boolean = true
-
-        /** Tag pour les logs. */
         private const val TAG: String = "MainApplication"
-
-        /** Version de l'application. */
         const val VERSION_NAME: String = "2.2.16"
     }
 
-    // Service d'application (lié via bindService)
+    // Instance du service principal (AppService), accessible globalement si nécessaire
     var appService: AppService? = null
         private set
 
-    // Connexion pour AppService
+    // Connection au service principal
     private val appServiceConnection = object : ServiceConnection {
-        override fun onServiceConnected(componentName: ComponentName?, service: IBinder?) {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             Log.d(TAG, "AppService connecté")
             service?.let {
                 appService = (it as AppService.LocalBinder).getService()
             }
         }
-
-        override fun onServiceDisconnected(componentName: ComponentName?) {
+        override fun onServiceDisconnected(name: ComponentName?) {
             Log.d(TAG, "AppService déconnecté")
             appService = null
         }
     }
 
-    // Service Bluetooth (même principe)
+    // (Optionnel) Service Bluetooth distinct si utilisé
     private var bluetoothService: BluetoothService? = null
 
     override fun onCreate() {
         super.onCreate()
-
-        // Initialisation Fresco
+        // Initialisation de Fresco (pour gestion d’images, ex: avatars)
         Fresco.initialize(this)
 
-        // Initialisation Firebase
-        FirebaseApp.initializeApp(this)
-        FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(true)
+        // **Suppression des initialisations externes** (Firebase, Crashlytics, Analytics, Volley)
+        // Plus de FirebaseApp.initializeApp, ni Crashlytics, ni AnalyticsManager ou VolleyManager.
 
-        // Initialisation Volley
-        VolleyManager.init(applicationContext)
+        // Initialisation du AppManager en local (si nécessaire)
+        // AppManager.init(applicationContext)  // Par exemple, charger l’état sauvegardé
+        // AppManager.start()                   // Démarrer les processus locaux (scan BLE auto, etc.)
 
-        // Initialisation et démarrage d'AppManager
-        AppManager.init(applicationContext)
-        AppManager.start()
-
-        // Initialisation du gestionnaire d'analytics
-        AnalyticsManager.init(applicationContext)
-
-        // Démarrage et liaison du service d'application
+        // Démarrage et liaison du service principal de l’application (AppService) pour la gestion BLE
         val appServiceIntent = Intent(this, AppService::class.java)
         bindService(appServiceIntent, appServiceConnection, Context.BIND_AUTO_CREATE)
     }
 
     override fun onTerminate() {
         super.onTerminate()
-        // Nettoyage d'AppManager et déconnexion du service
-        AppManager.close()
-        unbindService(appServiceConnection)
+        // Nettoyage : déconnexion du service
+        try {
+            unbindService(appServiceConnection)
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG, "Service déjà déconnecté : ${e.message}")
+        }
+        // AppManager.close()  // Arrêter proprement les tâches locales si défini
     }
 
     /**
-     * Lie le service Bluetooth. Si déjà connecté, exécute immédiatement le callback.
+     * Lie le service Bluetooth (s’il est séparé d’AppService). Exécute le callback une fois connecté.
      */
-    fun bindBluetoothService(callback: () -> Unit) {
+    fun bindBluetoothService(onConnected: () -> Unit) {
         if (bluetoothService == null) {
-            val bluetoothIntent = Intent(this, BluetoothService::class.java)
-            bindService(bluetoothIntent, object : ServiceConnection {
-                override fun onServiceConnected(componentName: ComponentName?, service: IBinder?) {
+            val intent = Intent(this, BluetoothService::class.java)
+            bindService(intent, object : ServiceConnection {
+                override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
                     Log.d(TAG, "BluetoothService connecté")
-                    service?.let {
-                        bluetoothService = (it as BluetoothService.LocalBinder).getService()
-                    }
-                    callback()
+                    bluetoothService = (service as BluetoothService.LocalBinder).getService()
+                    onConnected()
                 }
-
-                override fun onServiceDisconnected(componentName: ComponentName?) {
+                override fun onServiceDisconnected(name: ComponentName?) {
                     Log.d(TAG, "BluetoothService déconnecté")
                     bluetoothService = null
                 }
             }, Context.BIND_AUTO_CREATE)
         } else {
-            callback()
+            onConnected()
         }
-    }
-
-    /**
-     * Force la mise à jour du firmware via AppService.
-     */
-    fun forceUpdateFirmware(version: Int) {
-        appService?.forceUpdateFirmwareVersion(version)
     }
 }

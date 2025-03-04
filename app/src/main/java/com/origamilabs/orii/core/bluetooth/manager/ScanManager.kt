@@ -1,16 +1,19 @@
 package com.origamilabs.orii.core.bluetooth.manager
 
+import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
 import android.content.Context
-import android.util.Log
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import com.origamilabs.orii.core.bluetooth.BluetoothHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -19,72 +22,95 @@ import kotlin.coroutines.resume
 class ScanManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val bluetoothAdapter: BluetoothAdapter
-) {
+) : IManager {
 
-    private val TAG = "ScanManager"
-    private val scanPeriod = 30000L // 30 secondes
+    private val tag = "ScanManager"
+    private val scanPeriod = 30000L
 
-    /**
-     * Lance le scan Bluetooth pour trouver un appareil ORII.
-     * Si un appareil pré-appairé est trouvé, il est retourné immédiatement.
-     * Sinon, un scan est effectué avec un timeout de 30 secondes.
-     *
-     * @return L'appareil Bluetooth trouvé ou null en cas de timeout.
-     */
     suspend fun scanForOrii(): BluetoothDevice? {
-        // Vérifie si un appareil pré-appairé correspondant existe déjà
+        // Retourne immédiatement le périphérique pré-appairé s'il existe.
         findBondedOrii()?.let {
-            Log.d(TAG, "Appareil pré-appairé trouvé: ${it.address}")
+            Timber.d("Périphérique pré-appairé trouvé : ${it.address}")
             return it
         }
 
-        // Lancement du scan avec un timeout
         return withTimeoutOrNull(scanPeriod) {
             suspendCancellableCoroutine<BluetoothDevice> { cont ->
+                // Vérifie que la permission BLUETOOTH_SCAN est accordée
+                if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_SCAN)
+                    != PackageManager.PERMISSION_GRANTED) {
+                    cont.resumeWith(Result.failure(SecurityException("Permission BLUETOOTH_SCAN non accordée")))
+                    return@suspendCancellableCoroutine
+                }
                 val scanCallback = object : ScanCallback() {
                     override fun onScanResult(callbackType: Int, result: ScanResult) {
-                        super.onScanResult(callbackType, result)
                         val device = result.device
-                        Log.d(TAG, "Appareil scanné: ${result.scanRecord?.deviceName}:${device.address}")
+                        Timber.d("Périphérique scanné : ${result.scanRecord?.deviceName}:${device.address}")
                         if (BluetoothHelper.isOriiMacAddressInRange(device.address)) {
-                            Log.d(TAG, "Appareil ORII trouvé")
-                            bluetoothAdapter.bluetoothLeScanner?.stopScan(this)
+                            Timber.d("Périphérique ORII trouvé")
+                            try {
+                                bluetoothAdapter.bluetoothLeScanner?.stopScan(this)
+                            } catch (e: SecurityException) {
+                                Timber.e(e, "Erreur lors de l'arrêt du scan")
+                            }
                             if (cont.isActive) {
                                 cont.resume(device)
                             }
                         }
                     }
-
                     override fun onScanFailed(errorCode: Int) {
-                        super.onScanFailed(errorCode)
                         if (cont.isActive) {
-                            cont.resumeWithException(RuntimeException("Échec du scan avec le code d'erreur $errorCode"))
+                            cont.resumeWith(Result.failure(RuntimeException("Échec du scan avec le code d'erreur $errorCode")))
                         }
                     }
                 }
-
-                bluetoothAdapter.bluetoothLeScanner?.startScan(
-                    null,
-                    ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_POWER).build(),
-                    scanCallback
-                )
-
-                // Arrêter le scan si la coroutine est annulée
+                try {
+                    bluetoothAdapter.bluetoothLeScanner?.startScan(
+                        null,
+                        ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_POWER).build(),
+                        scanCallback
+                    )
+                } catch (e: SecurityException) {
+                    if (cont.isActive) {
+                        cont.resumeWith(Result.failure(e))
+                    }
+                    return@suspendCancellableCoroutine
+                }
                 cont.invokeOnCancellation {
-                    bluetoothAdapter.bluetoothLeScanner?.stopScan(scanCallback)
+                    try {
+                        bluetoothAdapter.bluetoothLeScanner?.stopScan(scanCallback)
+                    } catch (e: SecurityException) {
+                        Timber.e(e, "Erreur lors de l'arrêt du scan en cas d'annulation")
+                    }
                 }
             }
         }
     }
 
-    /**
-     * Recherche parmi les appareils appairés un appareil correspondant aux critères ORII.
-     */
     private fun findBondedOrii(): BluetoothDevice? {
+        // Vérifie la permission BLUETOOTH_CONNECT avant d'accéder aux périphériques appairés
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT)
+            != PackageManager.PERMISSION_GRANTED) {
+            Timber.e("Permission BLUETOOTH_CONNECT non accordée")
+            return null
+        }
         val bondedDevices = bluetoothAdapter.bondedDevices ?: emptySet()
-        Log.d(TAG, "Nombre d'appareils appairés: ${bondedDevices.size}")
+        Timber.d("Nombre de périphériques appairés : ${bondedDevices.size}")
         return bondedDevices.firstOrNull { device ->
             BluetoothHelper.isOriiMacAddressInRange(device.address)
         }
+    }
+
+    override fun initialize(): Boolean {
+        // Initialisation complémentaire si nécessaire
+        return true
+    }
+
+    override fun start() {
+        // ScanManager n'a pas de démarrage continu par défaut.
+    }
+
+    override fun close() {
+        // Nettoyage optionnel.
     }
 }

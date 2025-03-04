@@ -17,17 +17,12 @@ import android.os.Process
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.core.app.NotificationCompat
-import com.google.gson.JsonObject
-import com.origamilabs.orii.API
 import com.origamilabs.orii.Constants
 import com.origamilabs.orii.R
-import com.origamilabs.orii.analytics.AnalyticsManager
 import com.origamilabs.orii.controller.DeviceController
 import com.origamilabs.orii.core.bluetooth.manager.CommandManager
 import com.origamilabs.orii.core.bluetooth.manager.ConnectionManager
 import com.origamilabs.orii.database.AppManager
-import com.origamilabs.orii.models.FirmwareVersionInfo
-import com.origamilabs.orii.models.User
 import com.origamilabs.orii.models.VoiceAssistantCounter
 import com.origamilabs.orii.models.`enum`.CustomCommandAction
 import com.origamilabs.orii.notification.OriiNotificationListenerService
@@ -45,6 +40,13 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.concurrent.schedule
 
+/**
+ * Service principal de l'application ORII, chargé de gérer les opérations locales telles que
+ * la communication Bluetooth avec la bague, la gestion des notifications et la synthèse vocale.
+ *
+ * Les fonctionnalités de mise à jour du firmware et les connexions à des serveurs externes ont été supprimées
+ * pour rendre l'application autonome.
+ */
 class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListener, OnIncomingCallReceivedListener {
 
     companion object {
@@ -63,50 +65,6 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
     private var showingLowBatteryNotification = false
 
     private val eventListeners: ArrayList<AppServiceListener> = arrayListOf()
-
-    private var firmwareDownloadId: Long = -1L
-    private var appVersionInfoDownloadId: Long = -1L
-
-    // Broadcast receiver pour le téléchargement firmware normal
-    private val downloadFirmwareCompleteBroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val downloadId = intent?.getLongExtra("extra_download_id", -1L)
-            if (downloadId != null && downloadId == firmwareDownloadId) {
-                Log.d(TAG, "DownloadManager Completed")
-                unregisterReceiver(this)
-                sendBroadcast(Intent(Constants.FIRMWARE_DOWNLOADED_BROADCAST))
-                AppManager.instance.setCanFirmwareUpdate(true)
-                firmwareDownloadId = -1L
-            }
-        }
-    }
-
-    // Broadcast receiver pour le téléchargement firmware forcé
-    private val forceDownloadFirmwareCompleteBroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val downloadId = intent?.getLongExtra("extra_download_id", -1L)
-            if (downloadId != null && downloadId == firmwareDownloadId) {
-                Log.d(TAG, "DownloadManager Completed")
-                unregisterReceiver(this)
-                sendBroadcast(Intent(Constants.FIRMWARE_FORCE_DOWNLOADED_BROADCAST))
-                AppManager.instance.setCanFirmwareForceUpdate(true)
-                firmwareDownloadId = -1L
-            }
-        }
-    }
-
-    // Broadcast receiver pour le téléchargement d'informations de version d'application
-    private val downloadAppVersionCompleteBroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val downloadId = intent?.getLongExtra("extra_download_id", -1L)
-            if (downloadId != null && downloadId == appVersionInfoDownloadId) {
-                Log.d(TAG, "DownloadManager Completed")
-                unregisterReceiver(this)
-                sendBroadcast(Intent(Constants.APP_VERSION_INFO_DOWNLOADED_BROADCAST))
-                appVersionInfoDownloadId = -1L
-            }
-        }
-    }
 
     // Binder pour la liaison du service
     private val binder = LocalBinder()
@@ -155,11 +113,7 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
                         deviceController?.callMediaPlayOrPause()
                     CommandManager.ACTION_VOICE_ASSISTANT_STATE_CHANGED ->
                         insertVaTriggerCount(if (intent.getIntExtra(CommandManager.EXTRA_DATA, -1) == 0) 1 else 0)
-                    CommandManager.ACTION_FIRMWARE_VERSION -> {
-                        val firmwareVersion = intent.getIntExtra(CommandManager.EXTRA_DATA, -1)
-                        AppManager.instance.setFirmwareVersion(firmwareVersion)
-                        checkFirmwareVersion(firmwareVersion)
-                    }
+                    // Suppression de la branche firmware puisque la mise à jour externe est désactivée
                     CommandManager.ACTION_CHECK_GESTURE_MODE ->
                         AppManager.instance.sharedPreferences.setGestureMode(intent.getIntExtra(CommandManager.EXTRA_DATA, 0))
                     CommandManager.ACTION_MIC_MODE_CHANGED ->
@@ -216,10 +170,11 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
         deviceController = DeviceController(this)
 
         setupTTS()
-        initCheckAppVersionCounterTimer()
 
         ConnectionManager.getInstance().addCallback(connectionCallback)
         CommandManager.getInstance().addCallback(commandCallback)
+
+        // Suppression de l'initialisation de la vérification de version d'application
     }
 
     fun updateOriiBatteryLevel(batteryLevel: Int) {
@@ -242,7 +197,7 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
             .setOngoing(false)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(channelId, context.getString(R.string.notification_connection_channel_name), NotificationManager.IMPORTANCE_HIGH)
-            (context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(channel)
+            notificationManager.createNotificationChannel(channel)
         }
         notificationManager.notify(com.origamilabs.orii.core.Constants.ORII_NOTIFICATION_LOW_BATTERY, builder.build())
         showingLowBatteryNotification = true
@@ -254,93 +209,42 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
         showingLowBatteryNotification = false
     }
 
-    fun checkFirmwareVersion(version: Int) {
-        if (AppManager.instance.firmwareVersionChecked || AppManager.instance.canFirmwareUpdate || version == -1) return
-        API.instance.checkFirmwareVersion(version, AppManager.instance.currentUser!!.token, object : API.ResponseListener {
-            override fun onError(errorMessage: String) {
-                // Gérer l'erreur si nécessaire
-            }
-
-            override fun onSuccess(response: JsonObject) {
-                AppManager.instance.firmwareVersionChecked = true
-                if (response.get("need_update").asBoolean) {
-                    val versionObj = response.getAsJsonObject("version")
-                    val versionNumber = versionObj.get("version_number").asInt
-                    val url = versionObj.get("version_file_url").asString
-                    val remark = versionObj.get("version_remark").asString
-                    val bugFixes = versionObj.get("version_bug_fixes").asString
-                    val newFeatures = versionObj.get("version_new_features").asString
-                    val firmwareVersionInfo = FirmwareVersionInfo(versionNumber, url, remark, bugFixes, newFeatures)
-                    AppManager.instance.firmwareVersionInfo = firmwareVersionInfo
-                    downloadFirmware(firmwareVersionInfo)
-                } else {
-                    AppManager.instance.setCanFirmwareUpdate(false)
-                }
-            }
-        })
-    }
-
-    fun forceUpdateFirmwareVersion(version: Int) {
-        val firmwareVersionInfo = when (version) {
-            68 -> FirmwareVersionInfo(68, "https://orii.s3.amazonaws.com/firmware/android/80416a5d687538c254bf09651b2848c11557811642215V68_OTA.bin", "V68, full OTA image", "V68", "V68")
-            69 -> FirmwareVersionInfo(69, "https://orii.s3.amazonaws.com/firmware/android/608a15184d9757c1c2ad578c38600cf51563336461590V69_OTA.bin", "Gesture-control features", "V69", "V69")
-            70 -> FirmwareVersionInfo(70, "https://orii.s3.ap-southeast-1.amazonaws.com/firmware/android/a242027694e72629907771be0193d3051565944307099V70_OTA.bin", "Gesture Phase II", "V70", "V70")
-            71 -> FirmwareVersionInfo(71, "https://orii.s3.ap-southeast-1.amazonaws.com/firmware/android/199e446190e6aea46087815ddef266171573098477517V71_OTA.bin", "Dynamic Audio Revamp", "V71", "V71")
-            else -> FirmwareVersionInfo(71, "https://orii.s3.ap-southeast-1.amazonaws.com/firmware/android/199e446190e6aea46087815ddef266171573098477517V71_OTA.bin", "Dynamic Audio Revamp", "Clearer audio interactions in loud environments.", "")
-        }
-        AppManager.instance.firmwareVersionInfo = firmwareVersionInfo
-        forceDownloadFirmware(firmwareVersionInfo)
-    }
-
-    fun downloadFirmware(versionInfo: FirmwareVersionInfo) {
-        val externalFilesDir = getExternalFilesDir("update")
-        val file = File(externalFilesDir?.absolutePath, "v${versionInfo.versionNumber}.bin")
-        Log.d(TAG, "file.exists():${file.exists()},  absolutePath:${file.absolutePath}")
-        if (file.absoluteFile.exists() && firmwareDownloadId == -1L) {
-            AppManager.instance.setCanFirmwareUpdate(true)
-            sendBroadcast(Intent(Constants.FIRMWARE_DOWNLOADED_BROADCAST))
-        } else if (firmwareDownloadId == -1L) {
-            registerReceiver(downloadFirmwareCompleteBroadcastReceiver, IntentFilter("android.intent.action.DOWNLOAD_COMPLETE"))
-            firmwareDownloadId = API.instance.downloadFirmware(this, versionInfo.versionNumber, versionInfo.url, "Downloading firmware...")
-        }
-    }
-
-    private fun forceDownloadFirmware(versionInfo: FirmwareVersionInfo) {
-        val externalFilesDir = getExternalFilesDir("update")
-        val file = File(externalFilesDir?.absolutePath, "v${versionInfo.versionNumber}.bin")
-        Log.d(TAG, "file.exists():${file.exists()},  absolutePath:${file.absolutePath}")
-        if (file.absoluteFile.exists() && firmwareDownloadId == -1L) {
-            AppManager.instance.setCanFirmwareForceUpdate(true)
-            sendBroadcast(Intent(Constants.FIRMWARE_FORCE_DOWNLOADED_BROADCAST))
-        } else if (firmwareDownloadId == -1L) {
-            registerReceiver(forceDownloadFirmwareCompleteBroadcastReceiver, IntentFilter("android.intent.action.DOWNLOAD_COMPLETE"))
-            firmwareDownloadId = API.instance.downloadFirmware(this, versionInfo.versionNumber, versionInfo.url, "Downloading firmware...")
-        }
-    }
-
+    /**
+     * Exécute l'action associée à un geste personnalisé.
+     * Pour l'action WEB_HOOK, l'appel externe est désactivé en mode autonome.
+     */
     fun triggerCustomCommandAction(triggerGesture: String) {
-        var customCommandAction = CustomCommandAction.WEB_HOOK
-        if (triggerGesture == CommandManager.ACTION_GESTURE_FLAT_TRIPLE_TAP) {
-            customCommandAction = AppManager.instance.sharedPreferences.flatTripleTapAction
-        } else if (triggerGesture == CommandManager.ACTION_GESTURE_REVERSE_DOUBLE_TAP) {
-            customCommandAction = AppManager.instance.sharedPreferences.reverseDoubleTapAction
+        val customCommandAction = when (triggerGesture) {
+            CommandManager.ACTION_GESTURE_FLAT_TRIPLE_TAP -> AppManager.instance.sharedPreferences.flatTripleTapAction
+            CommandManager.ACTION_GESTURE_REVERSE_DOUBLE_TAP -> AppManager.instance.sharedPreferences.reverseDoubleTapAction
+            else -> CustomCommandAction.WEB_HOOK
         }
         when (customCommandAction) {
-            CustomCommandAction.WEB_HOOK -> API.instance.callWebHookTriggerUri(AppManager.instance.sharedPreferences.flatTripleTapWebHookUrl)
-            CustomCommandAction.DO_NOT_DISTURB_MODE -> deviceController?.switchDisturbMode()
-            CustomCommandAction.FLASHLIGHT_SWITCH -> deviceController?.switchFlashlight()
-            CustomCommandAction.SCREEN_ON_OFF -> deviceController?.switchScreenLock()
-            CustomCommandAction.TIME_READOUT -> speakCurrentTime(false)
-            CustomCommandAction.CALENDAR_READOUT -> speakCalendarEvent()
+            CustomCommandAction.WEB_HOOK -> {
+                Log.d(TAG, "WEB_HOOK action est désactivée en mode autonome")
+                // Aucun appel externe n'est effectué
+            }
+            CustomCommandAction.DO_NOT_DISTURB_MODE ->
+                deviceController?.switchDisturbMode()
+            CustomCommandAction.FLASHLIGHT_SWITCH ->
+                deviceController?.switchFlashlight()
+            CustomCommandAction.SCREEN_ON_OFF ->
+                deviceController?.switchScreenLock()
+            CustomCommandAction.TIME_READOUT ->
+                speakCurrentTime(false)
+            CustomCommandAction.CALENDAR_READOUT ->
+                speakCalendarEvent()
         }
     }
 
     private fun speakCurrentTime(isShort: Boolean) {
+        // Pour la France, on utilise explicitement Locale.FRANCE
+        val frenchLocale = java.util.Locale.FRANCE
         val simpleDateFormat = when {
-            isShort -> SimpleDateFormat("h:mm a", DeviceLocale.instance.deviceLocale)
+            isShort -> SimpleDateFormat("HH:mm", frenchLocale) // Format 24h pour la France
             DeviceLocale.instance.deviceLocale.language.equals("zh", ignoreCase = true) ->
                 SimpleDateFormat("MMMMdd日EEEE, HH:mm", DeviceLocale.instance.deviceLocale)
-            else -> SimpleDateFormat("EEEE, dd, MMMM, HH:mm", DeviceLocale.instance.deviceLocale)
+            else -> SimpleDateFormat("EEEE, dd MMMM, HH:mm", frenchLocale)
         }
         val calendar = Calendar.getInstance()
         val currentDateTime = simpleDateFormat.format(calendar.time)
@@ -370,47 +274,77 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
         }
     }
 
-    private fun initCheckAppVersionCounterTimer() {
-        Timer().schedule(object : TimerTask() {
-            override fun run() {
-                registerReceiver(downloadAppVersionCompleteBroadcastReceiver, IntentFilter("android.intent.action.DOWNLOAD_COMPLETE"))
-                appVersionInfoDownloadId = API.instance.downloadAppVersionInformation(
-                    this@AppService,
-                    Constants.PUBLIC_APP_VERSION_INFORMATION_URL,
-                    "Downloading app version information..."
-                )
-            }
-        }, 0L, 43200000L)
-    }
-
-    private fun isNotificationListenerServiceRunning(context: Context): Boolean {
-        val componentName = ComponentName(context, OriiNotificationListenerService::class.java)
-        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        val runningServices = activityManager.getRunningServices(Int.MAX_VALUE)
-        var isRunning = false
-        for (serviceInfo in runningServices) {
-            if (serviceInfo.service == componentName && serviceInfo.pid == Process.myPid()) {
-                isRunning = true
+    private fun setupTTS() {
+        tts = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                tts?.let {
+                    setTTSLanguage(it)
+                }
+                mIncomingCallHandler = IncomingCallHandler()
+                phoneCallReceiver?.addListener(mIncomingCallHandler!!)
             }
         }
-        if (!isRunning) {
-            toggleNotificationListenerService(context)
-        }
-        return isRunning
     }
 
-    private fun toggleNotificationListenerService(context: Context) {
-        val packageManager = packageManager
-        packageManager.setComponentEnabledSetting(
-            ComponentName(context, OriiNotificationListenerService::class.java),
-            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-            PackageManager.DONT_KILL_APP
-        )
-        packageManager.setComponentEnabledSetting(
-            ComponentName(context, OriiNotificationListenerService::class.java),
-            PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-            PackageManager.DONT_KILL_APP
-        )
+    /**
+     * Configure la langue du moteur TTS.
+     * Pour la France, la langue est forcée en français et la tâche de changement de langue est notifiée via CommandManager.
+     */
+    fun setTTSLanguage(tts: TextToSpeech) {
+        val deviceLocale = DeviceLocale.instance.deviceLocale
+        when {
+            deviceLocale.language.equals("ja", ignoreCase = true) -> {
+                CommandManager.getInstance().putCallChangeLanguageTask(1)
+            }
+            deviceLocale.language.equals("fr", ignoreCase = true) -> {
+                // Pour la France, on utilise Locale.FRANCE et on envoie une valeur spécifique (ici 2)
+                CommandManager.getInstance().putCallChangeLanguageTask(2)
+            }
+            else -> {
+                CommandManager.getInstance().putCallChangeLanguageTask(0)
+            }
+        }
+        tts.language = if (deviceLocale.language.equals("fr", ignoreCase = true)) {
+            java.util.Locale.FRANCE
+        } else {
+            deviceLocale
+        }
+    }
+
+    fun readOutMessage() {
+        val ttsInstance = tts ?: throw UninitializedPropertyAccessException("tts")
+        if (ttsInstance.isSpeaking) {
+            ttsInstance.stop()
+            val cleared = getString(R.string.tts_message_cleared)
+            readOutMessage(cleared)
+            return
+        }
+        val speechQueue = mMessageHandler?.getSpeechQueue(this) ?: arrayListOf()
+        if (speechQueue.isNotEmpty()) {
+            speakCurrentTime(true)
+            for (msg in speechQueue) {
+                readOutMessage(msg)
+            }
+        } else {
+            val noNew = getString(R.string.tts_no_new_messages)
+            readOutMessage(noNew)
+        }
+    }
+
+    private fun readOutMessage(speech: String) {
+        val ttsInstance = tts ?: throw UninitializedPropertyAccessException("tts")
+        setTTSLanguage(ttsInstance)
+        Log.d(TAG, "TTS read out: $speech")
+        ttsInstance.setSpeechRate(AppManager.instance.sharedPreferences.readoutSpeed)
+        ttsInstance.speak(speech, TextToSpeech.QUEUE_FLUSH, null, null)
+    }
+
+    override fun onBind(intent: Intent?): IBinder {
+        return binder
+    }
+
+    inner class LocalBinder : Binder() {
+        fun getService(): AppService = this@AppService
     }
 
     // OnSmsReceivedListener
@@ -453,64 +387,6 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
     override fun onIncomingCallReceived(packageName: String) {
         Log.d(TAG, "onIncomingCallReceived and packageName is: $packageName")
         CommandManager.getInstance().putCallAllowLinePhonecallPickUpTask()
-        AnalyticsManager.instance.logVoiceCall(packageName)
-    }
-
-    private fun setupTTS() {
-        tts = TextToSpeech(this) { status ->
-            if (status == TextToSpeech.SUCCESS) {
-                tts?.let {
-                    setTTSLanguage(it)
-                }
-                mIncomingCallHandler = IncomingCallHandler()
-                phoneCallReceiver?.addListener(mIncomingCallHandler!!)
-            }
-        }
-    }
-
-    fun setTTSLanguage(tts: TextToSpeech) {
-        val deviceLocale = DeviceLocale.instance.deviceLocale
-        if (deviceLocale.language.equals("ja", ignoreCase = true)) {
-            CommandManager.getInstance().putCallChangeLanguageTask(1)
-        } else {
-            CommandManager.getInstance().putCallChangeLanguageTask(0)
-        }
-        tts.language = deviceLocale
-    }
-
-    fun readOutMessage() {
-        val ttsInstance = tts ?: throw UninitializedPropertyAccessException("tts")
-        if (ttsInstance.isSpeaking) {
-            ttsInstance.stop()
-            val cleared = getString(R.string.tts_message_cleared)
-            readOutMessage(cleared)
-            return
-        }
-        val speechQueue = mMessageHandler?.getSpeechQueue(this) ?: arrayListOf()
-        if (speechQueue.isNotEmpty()) {
-            speakCurrentTime(true)
-            for (msg in speechQueue) {
-                readOutMessage(msg)
-            }
-        } else {
-            val noNew = getString(R.string.tts_no_new_messages)
-            readOutMessage(noNew)
-        }
-    }
-
-    private fun readOutMessage(speech: String) {
-        val ttsInstance = tts ?: throw UninitializedPropertyAccessException("tts")
-        setTTSLanguage(ttsInstance)
-        Log.d(TAG, "TTS read out: $speech")
-        ttsInstance.setSpeechRate(AppManager.instance.sharedPreferences.readoutSpeed)
-        ttsInstance.speak(speech, TextToSpeech.QUEUE_FLUSH, null, null)
-    }
-
-    override fun onBind(intent: Intent?): IBinder {
-        return binder
-    }
-
-    inner class LocalBinder : Binder() {
-        fun getService(): AppService = this@AppService
+        // Suppression de l'appel au suivi analytique externe
     }
 }

@@ -1,9 +1,13 @@
 package com.origamilabs.orii.bluetooth
 
+import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
+import android.bluetooth.BluetoothManager
 import android.content.Context
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -22,22 +26,35 @@ class OriiBluetoothManager @Inject constructor(
     private val context: Context,
     private val gaiaManager: GaiaManager
 ) {
-    private val adapter: BluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
+    // Récupération de l'adaptateur Bluetooth via BluetoothManager (méthode recommandée)
+    private val adapter: BluetoothAdapter? =
+        (context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter
+
     private var socket: BluetoothSocket? = null
     private var inputStream: InputStream? = null
     private var outputStream: OutputStream? = null
 
     // UUID du service SPP (ou GAIA) de la bague ORII. Utilisation de SPP par défaut.
-    private val ORII_UUID: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+    private val oriiUuid: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
 
     /** Établir la connexion Bluetooth avec la bague (opération effectuée en background via coroutine). */
     @Throws(IOException::class)
     suspend fun connect(deviceAddress: String) {
         withContext(Dispatchers.IO) {
-            // Récupère l’appareil Bluetooth par adresse MAC
-            val device: BluetoothDevice = adapter.getRemoteDevice(deviceAddress)
+            // Vérifier que la permission BLUETOOTH_CONNECT est accordée
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT)
+                != PackageManager.PERMISSION_GRANTED) {
+                throw SecurityException("Permission BLUETOOTH_CONNECT non accordée")
+            }
+
+            // Vérifier que l'adaptateur Bluetooth est disponible
+            val bluetoothAdapter = adapter ?: throw IllegalStateException("Bluetooth adapter non disponible")
+
+            // Récupérer l’appareil Bluetooth par adresse MAC
+            val device: BluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceAddress)
+
             // Création du socket RFCOMM (profil SPP ou spécifique GAIA)
-            socket = device.createRfcommSocketToServiceRecord(ORII_UUID)
+            socket = device.createRfcommSocketToServiceRecord(oriiUuid)
             try {
                 socket?.connect()  // tentative de connexion (bloquant)
             } catch (e: IOException) {
@@ -58,7 +75,7 @@ class OriiBluetoothManager @Inject constructor(
         withContext(Dispatchers.IO) {
             val packet: ByteArray = gaiaManager.createCommandPacket(commandId, payload)
             outputStream?.write(packet)
-            // (La réponse pourra être lue via inputStream dans une coroutine séparée si besoin)
+            // La lecture de la réponse peut être effectuée dans une coroutine séparée si nécessaire
         }
     }
 
@@ -71,7 +88,4 @@ class OriiBluetoothManager @Inject constructor(
         inputStream = null
         outputStream = null
     }
-
-    // (Éventuellement, on pourrait ajouter une fonction pour écouter les réponses de la bague
-    // en utilisant inputStream et gaiaManager.parseResponsePacket, et poster des événements.)
 }
