@@ -1,29 +1,21 @@
 package com.origamilabs.orii.core.bluetooth.connection
 
+import android.Manifest
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothProfile
 import android.content.Context
-import android.os.Build
-import android.os.Handler
-import android.util.Log
-import com.origamilabs.orii.core.bluetooth.BluetoothHelper
-import com.origamilabs.orii.core.bluetooth.connection.ConnectionHandler.Companion.STATE_CONNECTED
-import com.origamilabs.orii.core.bluetooth.connection.ConnectionHandler.Companion.STATE_DISCONNECTED
-import com.origamilabs.orii.core.bluetooth.connection.ConnectionHandler.Companion.STATE_CONNECTING
-import com.origamilabs.orii.core.bluetooth.manager.CommandManager
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.*
+import timber.log.Timber
+import javax.inject.Inject
 
-/**
- * Gestionnaire de connexion GATT pour les périphériques Bluetooth.
- *
- * Ce handler gère la connexion, la déconnexion, le rafraîchissement et la mise à jour de l'état de la connexion GATT.
- */
-class GattHandler(
-    context: Context,
+class GattHandler @Inject constructor(
+    @ApplicationContext context: Context,
     callback: ConnectionHandler.Callback
 ) : ConnectionHandler(context, "Gatt State Handler", callback) {
 
@@ -32,88 +24,192 @@ class GattHandler(
     }
 
     private var mBluetoothGatt: BluetoothGatt? = null
-    private val mGattCallback: BluetoothGattCallback
     private var mIsClosingGatt: Boolean = false
     private var mIsConnectingGatt: Boolean = false
     private var mIsHandShakeSucceed: Boolean = false
 
-    init {
-        mIsHandShakeSucceed = false
-        mIsConnectingGatt = false
-        mIsClosingGatt = false
-        mGattCallback = object : BluetoothGattCallback() {
-            var disconnectionCount = 0
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-            override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
-                super.onConnectionStateChange(gatt, status, newState)
-                Log.d(TAG, "onConnectionStateChange() new state:$newState, new status:$status")
-                if (newState != BluetoothProfile.STATE_DISCONNECTED) {
-                    if (newState != BluetoothProfile.STATE_CONNECTED) return
-                    // Lorsque la connexion est établie, attendre 1 seconde puis démarrer la découverte des services.
-                    mMainHandler.postDelayed({
-                        mBluetoothGatt?.let { btGatt ->
-                            Log.d(TAG, "Before discoverServices Bond state: ${btGatt.device.bondState}")
-                            Log.d(TAG, "Connected to GATT server.")
-                            Log.d(TAG, "Attempting to start service discovery: ${btGatt.discoverServices()}")
-                            Log.d(TAG, "After discoverServices Bond state: ${btGatt.device.bondState}")
+    private val mGattCallback = object : BluetoothGattCallback() {
+        var disconnectionCount = 0
+
+        override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
+            super.onConnectionStateChange(gatt, status, newState)
+            Timber.d("onConnectionStateChange() nouvel état: $newState, statut: $status")
+            if (newState != BluetoothProfile.STATE_DISCONNECTED) {
+                if (newState != BluetoothProfile.STATE_CONNECTED) return
+                // Lorsque la connexion est établie, attendre 1 seconde puis démarrer la découverte des services.
+                CoroutineScope(Dispatchers.Main).launch {
+                    delay(1000L)
+                    mBluetoothGatt?.let { btGatt ->
+                        if (ContextCompat.checkSelfPermission(
+                                mContext,
+                                Manifest.permission.BLUETOOTH_CONNECT
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            try {
+                                Timber.d("Avant découverte des services, état d'appairage: ${btGatt.device.bondState}")
+                            } catch (e: SecurityException) {
+                                Timber.e(e, "Permission manquante pour accéder à bondState avant découverte")
+                            }
+                        } else {
+                            Timber.e("Permission BLUETOOTH_CONNECT non accordée pour vérifier l'état d'appairage")
                         }
-                        disconnectionCount = 0
-                    }, 1000L)
-                    return
+                        Timber.d("Connecté au serveur GATT.")
+                        if (ContextCompat.checkSelfPermission(
+                                mContext,
+                                Manifest.permission.BLUETOOTH_CONNECT
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            try {
+                                val discoveryStarted = btGatt.discoverServices()
+                                Timber.d("Lancement de la découverte des services: $discoveryStarted")
+                            } catch (e: SecurityException) {
+                                Timber.e(e, "Permission manquante pour découvrir les services")
+                            }
+                        } else {
+                            Timber.e("Permission BLUETOOTH_CONNECT non accordée pour découvrir les services")
+                        }
+                        if (ContextCompat.checkSelfPermission(
+                                mContext,
+                                Manifest.permission.BLUETOOTH_CONNECT
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            try {
+                                Timber.d("Après découverte des services, état d'appairage: ${btGatt.device.bondState}")
+                            } catch (e: SecurityException) {
+                                Timber.e(e, "Permission manquante pour accéder à bondState après découverte")
+                            }
+                        } else {
+                            Timber.e("Permission BLUETOOTH_CONNECT non accordée pour vérifier l'état d'appairage après découverte")
+                        }
+                    }
+                    disconnectionCount = 0
                 }
-                Log.d(TAG, "Disconnected from GATT server.")
-                Log.d(TAG, "disconnectionCount: $disconnectionCount")
-                CommandManager.getInstance().close()
-                if (status != 19) {
-                    if ((status != 133 && status != 66) || disconnectionCount >= 2) {
+                return
+            }
+            Timber.d("Déconnecté du serveur GATT.")
+            Timber.d("disconnectionCount: $disconnectionCount")
+            if (status != 19) {
+                if ((status != 133 && status != 66) || disconnectionCount >= 2) {
+                    mIsClosingGatt = true
+                    scope.launch {
+                        disconnect()
+                        delay(600L)
+                        close()
+                        delay(600L)
+                        mIsClosingGatt = false
+                    }
+                    disconnectionCount = 0
+                } else {
+                    disconnectionCount++
+                }
+            }
+            Timber.d("mIsConnectingGatt: $mIsConnectingGatt")
+            mIsConnectingGatt = false
+        }
+
+        override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+            super.onServicesDiscovered(gatt, status)
+            Timber.d("onServicesDiscovered() statut=$status")
+            if (mBluetoothGatt == null) {
+                Timber.d("onServicesDiscovered() mBluetoothGatt est null")
+            }
+            if (status == 0) {
+                mBluetoothGatt?.let { btGatt ->
+                    if (ContextCompat.checkSelfPermission(
+                            mContext,
+                            Manifest.permission.BLUETOOTH_CONNECT
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
                         try {
-                            mIsClosingGatt = true
-                            disconnect()
-                            Thread.sleep(600L)
-                            close()
-                            Thread.sleep(600L)
-                            mIsClosingGatt = false
-                        } catch (e: InterruptedException) {
-                            e.printStackTrace()
+                            Timber.d("onServicesDiscovered() - Avant état d'appairage: ${btGatt.device.bondState}")
+                        } catch (e: SecurityException) {
+                            Timber.e(e, "Permission manquante pour accéder à bondState avant handshake")
                         }
-                        disconnectionCount = 0
                     } else {
-                        disconnectionCount++
+                        Timber.e("Permission BLUETOOTH_CONNECT non accordée pour vérifier l'état d'appairage")
                     }
                 }
-                Log.d(TAG, "mIsConnectingGatt: $mIsConnectingGatt")
+                Timber.d("mIsConnectingGatt: $mIsConnectingGatt")
+                mIsConnectingGatt = false
+                onHandShakeSucceed()
+                mBluetoothGatt?.let { btGatt ->
+                    if (ContextCompat.checkSelfPermission(
+                            mContext,
+                            Manifest.permission.BLUETOOTH_CONNECT
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        try {
+                            Timber.d("onServicesDiscovered() - Après état d'appairage: ${btGatt.device.bondState}")
+                        } catch (e: SecurityException) {
+                            Timber.e(e, "Permission manquante pour accéder à bondState après handshake")
+                        }
+                    } else {
+                        Timber.e("Permission BLUETOOTH_CONNECT non accordée pour vérifier l'état d'appairage après handshake")
+                    }
+                }
+            }
+        }
+
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?
+        ) {
+            super.onCharacteristicChanged(gatt, characteristic)
+            broadcastUpdate(characteristic)
+        }
+    }
+
+    override fun connect(device: BluetoothDevice) {
+        setDevice(device)
+        mIsConnectingGatt = true
+        if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+            try {
+                mBluetoothGatt = device.connectGatt(mContext, false, mGattCallback)
+            } catch (e: SecurityException) {
+                Timber.e(e, "Permission manquante lors de l'appel à connectGatt")
                 mIsConnectingGatt = false
             }
+        } else {
+            Timber.e("Permission BLUETOOTH_CONNECT non accordée pour connectGatt.")
+            mIsConnectingGatt = false
+        }
+    }
 
-            override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
-                super.onServicesDiscovered(gatt, status)
-                Log.d(TAG, "onServicesDiscovered() status=$status")
-                if (mBluetoothGatt == null) {
-                    Log.d(TAG, "onServicesDiscovered() the mBluetoothGatt is null")
-                }
-                if (status == 0) {
-                    mBluetoothGatt?.let { btGatt ->
-                        Log.d(TAG, "onServicesDiscovered()- Before bond state: ${btGatt.device.bondState}")
-                    }
-                    Log.d(TAG, "mIsConnectingGatt: $mIsConnectingGatt")
-                    mIsConnectingGatt = false
-                    onHandShakeSucceed()
-                    mBluetoothGatt?.let { btGatt ->
-                        Log.d(TAG, "onServicesDiscovered()- After bond state: ${btGatt.device.bondState}")
-                    }
-                }
-            }
+    override fun disconnect() {
+        try {
+            mBluetoothGatt?.disconnect()
+        } catch (e: SecurityException) {
+            Timber.e(e, "Permission manquante lors de l'appel à disconnect")
+        }
+    }
 
-            override fun onCharacteristicChanged(
-                gatt: BluetoothGatt?,
-                characteristic: BluetoothGattCharacteristic?
-            ) {
-                super.onCharacteristicChanged(gatt, characteristic)
-                broadcastUpdate(characteristic)
-            }
+    @Deprecated("This method is deprecated in the base class")
+    override fun close() {
+        try {
+            mBluetoothGatt?.close()
+        } catch (e: SecurityException) {
+            Timber.e(e, "Permission manquante lors de l'appel à close")
+        }
+        mBluetoothGatt = null
+    }
+
+    override fun getConnectionState(): Int {
+        return when {
+            mBluetoothGatt == null -> BluetoothProfile.STATE_DISCONNECTED
+            mIsConnectingGatt -> BluetoothProfile.STATE_CONNECTING
+            mIsHandShakeSucceed -> BluetoothProfile.STATE_CONNECTED
+            else -> BluetoothProfile.STATE_DISCONNECTED
         }
     }
 
     fun onHandShakeSucceed() {
         mIsHandShakeSucceed = true
-        
+        Timber.d("La poignée de main a réussi.")
+    }
+
+    private fun broadcastUpdate(characteristic: BluetoothGattCharacteristic?) {
+        Timber.d("Mise à jour de la caractéristique reçue: ${characteristic?.uuid}")
+    }
+}

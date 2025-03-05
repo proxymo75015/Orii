@@ -1,24 +1,27 @@
 package com.origamilabs.orii.core.bluetooth.connection
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHeadset
 import android.bluetooth.BluetoothProfile
 import android.content.Context
-import android.util.Log
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import com.origamilabs.orii.core.bluetooth.BluetoothHelper
+import dagger.hilt.android.qualifiers.ApplicationContext
+import timber.log.Timber
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import javax.inject.Inject
 
-/**
- * Handler pour la connexion du profil Headset.
- *
- * Gère la connexion et la déconnexion d'un périphérique Bluetooth Headset via des méthodes
- * de réflexion.
- */
-class HeadsetHandler(
-    context: Context,
-    callback: ConnectionHandler.Callback
-) : ConnectionHandler(context, "headset State Handler", callback) {
+@SuppressLint("MissingPermission")
+class HeadsetHandler @Inject constructor(
+    @ApplicationContext mContext: Context,
+    callback: Callback
+) : ConnectionHandler(mContext, "Headset State Handler", callback) {
+
+    private val context: Context = mContext
 
     companion object {
         private const val TAG = "HeadsetHandler"
@@ -29,7 +32,7 @@ class HeadsetHandler(
 
     private val mHeadsetServiceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, bluetoothProfile: BluetoothProfile) {
-            Log.d(TAG, "Connected to $profile")
+            Timber.d("Connecté au profil $profile")
             mHeadsetProfile = bluetoothProfile
         }
 
@@ -40,22 +43,36 @@ class HeadsetHandler(
 
     init {
         mIsConnecting = false
-        // Obtenir le proxy du profil HEADSET (BluetoothProfile.HEADSET == 1)
-        BluetoothHelper.getBluetoothAdapter(mContext)
-            ?.getProfileProxy(mContext, mHeadsetServiceListener, BluetoothProfile.HEADSET)
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+            try {
+                BluetoothHelper.getBluetoothAdapter(context)
+                    ?.getProfileProxy(context, mHeadsetServiceListener, BluetoothProfile.HEADSET)
+            } catch (e: SecurityException) {
+                Timber.e(e, "Permission refusée lors de l'obtention du proxy du profil Headset.")
+            }
+        } else {
+            Timber.e("Permission BLUETOOTH_CONNECT non accordée. Impossible d'obtenir le proxy du profil Headset.")
+        }
     }
 
     override fun close() {
         // Aucun comportement à effectuer ici.
     }
 
-    override fun isConnecting(): Boolean = mIsConnecting
-
     override fun getConnectionState(): Int {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            Timber.e("Permission BLUETOOTH_CONNECT non accordée. Impossible de récupérer l'état de connexion.")
+            return STATE_DISCONNECTED
+        }
         val connectionState = if (mHeadsetProfile == null || mDevice == null) {
             STATE_DISCONNECTED
         } else {
-            mHeadsetProfile!!.getConnectionState(mDevice)
+            try {
+                mHeadsetProfile!!.getConnectionState(mDevice)
+            } catch (e: SecurityException) {
+                Timber.e(e, "Permission refusée lors de la récupération de l'état de connexion.")
+                STATE_DISCONNECTED
+            }
         }
         if (connectionState == STATE_CONNECTED || connectionState == STATE_DISCONNECTED) {
             mIsConnecting = false
@@ -63,7 +80,7 @@ class HeadsetHandler(
         if (!mIsConnecting) {
             return connectionState
         }
-        Log.d(TAG, "Disconnecting bug, trying to set connecting")
+        Timber.d("Bug de déconnexion, tentative de mise en connexion")
         return STATE_CONNECTING
     }
 
@@ -72,7 +89,7 @@ class HeadsetHandler(
         mIsConnecting = true
         if (device.bondState == BluetoothDevice.BOND_BONDED) {
             if (getConnectionState() == STATE_DISCONNECTED) {
-                Log.d(TAG, "Already bonded, connect headset directly")
+                Timber.d("Déjà appairé, connexion du casque directe")
                 connectHeadset()
                 return
             } else {
@@ -80,7 +97,7 @@ class HeadsetHandler(
                 return
             }
         }
-        Log.d(TAG, "Device not bonded, state=${device.bondState}")
+        Timber.d("Appareil non appairé, état=${device.bondState}")
         mIsConnecting = false
     }
 
@@ -90,46 +107,54 @@ class HeadsetHandler(
 
     private fun connectHeadset() {
         setPriority(mDevice, 100)
-        mHeadsetProfile ?: return
+        if (mHeadsetProfile == null) return
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            Timber.e("Permission BLUETOOTH_CONNECT non accordée. Connexion du casque impossible.")
+            return
+        }
         try {
-            val method: Method =
-                BluetoothHeadset::class.java.getMethod("connect", BluetoothDevice::class.java)
+            val method: Method = BluetoothHeadset::class.java.getMethod("connect", BluetoothDevice::class.java)
             method.isAccessible = true
             method.invoke(mHeadsetProfile, mDevice)
         } catch (e: IllegalAccessException) {
-            e.printStackTrace()
-            Log.e(TAG, "Illegal Access! $e")
+            Timber.e(e, "Accès illégal!")
         } catch (e: NoSuchMethodException) {
-            e.printStackTrace()
-            Log.e(TAG, "Unable to find connect(BluetoothDevice) method in BluetoothHeadset proxy.")
+            Timber.e(e, "Méthode connect(BluetoothDevice) introuvable dans le proxy BluetoothHeadset.")
         } catch (e: InvocationTargetException) {
-            e.printStackTrace()
-            Log.e(TAG, "Unable to invoke connect(BluetoothDevice) method on proxy. $e")
+            Timber.e(e, "Impossible d'invoquer la méthode connect(BluetoothDevice) sur le proxy.")
+        } catch (e: SecurityException) {
+            Timber.e(e, "Permission refusée lors de la tentative de connexion du casque.")
         }
     }
 
     private fun disconnectHeadset() {
         setPriority(mDevice, 0)
-        mHeadsetProfile ?: return
+        if (mHeadsetProfile == null) return
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            Timber.e("Permission BLUETOOTH_CONNECT non accordée. Déconnexion du casque impossible.")
+            return
+        }
         try {
-            val method: Method =
-                BluetoothHeadset::class.java.getMethod("disconnect", BluetoothDevice::class.java)
+            val method: Method = BluetoothHeadset::class.java.getMethod("disconnect", BluetoothDevice::class.java)
             method.isAccessible = true
             method.invoke(mHeadsetProfile, mDevice)
         } catch (e: IllegalAccessException) {
-            e.printStackTrace()
-            Log.e(TAG, "Illegal Access! $e")
+            Timber.e(e, "Accès illégal!")
         } catch (e: NoSuchMethodException) {
-            e.printStackTrace()
-            Log.e(TAG, "Unable to find disconnect(BluetoothDevice) method in BluetoothHeadset proxy.")
+            Timber.e(e, "Méthode disconnect(BluetoothDevice) introuvable dans le proxy BluetoothHeadset.")
         } catch (e: InvocationTargetException) {
-            e.printStackTrace()
-            Log.e(TAG, "Unable to invoke disconnect(BluetoothDevice) method on proxy. $e")
+            Timber.e(e, "Impossible d'invoquer la méthode disconnect(BluetoothDevice) sur le proxy.")
+        } catch (e: SecurityException) {
+            Timber.e(e, "Permission refusée lors de la tentative de déconnexion du casque.")
         }
     }
 
     private fun setPriority(device: BluetoothDevice?, priority: Int) {
         if (mHeadsetProfile == null) return
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            Timber.e("Permission BLUETOOTH_CONNECT non accordée. Impossible de définir la priorité.")
+            return
+        }
         try {
             val method: Method = BluetoothHeadset::class.java.getMethod(
                 "setPriority",
@@ -138,8 +163,7 @@ class HeadsetHandler(
             )
             method.invoke(mHeadsetProfile, device, priority)
         } catch (e: Exception) {
-            Log.d(TAG, e.toString())
-            e.printStackTrace()
+            Timber.d(e, "Erreur lors de la définition de la priorité")
         }
     }
 }

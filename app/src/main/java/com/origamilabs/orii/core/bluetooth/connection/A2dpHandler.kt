@@ -1,14 +1,19 @@
 package com.origamilabs.orii.core.bluetooth.connection
 
+import android.Manifest.permission.BLUETOOTH_CONNECT
 import android.bluetooth.BluetoothA2dp
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothProfile
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
+import androidx.core.content.ContextCompat
 import com.origamilabs.orii.core.bluetooth.BluetoothHelper
+import dagger.hilt.android.qualifiers.ApplicationContext
+import timber.log.Timber
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import javax.inject.Inject
 
 /**
  * Handler pour la connexion A2DP.
@@ -16,8 +21,8 @@ import java.lang.reflect.Method
  * Cette classe gère la connexion/déconnexion d'un périphérique A2DP en utilisant la réflexion
  * pour invoquer les méthodes "connect", "disconnect" et "setPriority" sur l'API BluetoothA2dp.
  */
-class A2dpHandler(
-    context: Context,
+class A2dpHandler @Inject constructor(
+    @ApplicationContext context: Context,
     callback: ConnectionHandler.Callback
 ) : ConnectionHandler(context, "A2dp State Handler", callback) {
 
@@ -25,63 +30,76 @@ class A2dpHandler(
         private const val TAG = "A2dpHandler"
     }
 
-    private var mA2dpProfile: BluetoothProfile? = null
-    private var mIsConnecting: Boolean = false
+    // Utilisation d'un nom de variable plus court pour éviter la redondance
+    private var a2dpProfile: BluetoothProfile? = null
 
-    private val mA2dpServiceListener = object : BluetoothProfile.ServiceListener {
+    private val a2dpServiceListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, bluetoothProfile: BluetoothProfile) {
-            Log.d(TAG, "Connected to $profile")
-            mA2dpProfile = bluetoothProfile
+            Timber.d("Connecté au profil $profile")
+            a2dpProfile = bluetoothProfile
         }
 
         override fun onServiceDisconnected(profile: Int) {
-            mA2dpProfile = null
+            a2dpProfile = null
         }
     }
 
     init {
-        // Obtenir le proxy A2DP via le BluetoothHelper
-        BluetoothHelper.getBluetoothAdapter(context)?.getProfileProxy(context, mA2dpServiceListener, BluetoothProfile.A2DP)
+        // Vérification de la permission avant d'obtenir le proxy A2DP
+        if (ContextCompat.checkSelfPermission(context, BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+            BluetoothHelper.getBluetoothAdapter(context)
+                ?.getProfileProxy(context, a2dpServiceListener, BluetoothProfile.A2DP)
+        } else {
+            Timber.e("Permission BLUETOOTH_CONNECT non accordée pour obtenir le proxy A2DP.")
+        }
     }
 
     override fun close() {
         // Rien à fermer ici
     }
 
-    override fun isConnecting(): Boolean = mIsConnecting
-
     override fun getConnectionState(): Int {
-        val connectionState = if (mA2dpProfile == null || mDevice == null) {
-            0
-        } else {
-            mA2dpProfile!!.getConnectionState(mDevice)
+        // Vérification de la permission pour appeler getConnectionState()
+        if (ContextCompat.checkSelfPermission(mContext, BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            Timber.e("Permission BLUETOOTH_CONNECT non accordée lors de la récupération de l'état.")
+            return BluetoothProfile.STATE_DISCONNECTED
         }
-        // Si l'état est connecté (2) ou déconnecté (0), on réinitialise le flag de connexion.
+        val connectionState = try {
+            if (a2dpProfile == null || mDevice == null) {
+                BluetoothProfile.STATE_DISCONNECTED
+            } else {
+                a2dpProfile!!.getConnectionState(mDevice)
+            }
+        } catch (e: SecurityException) {
+            Timber.e(e, "Erreur de sécurité lors de la récupération de l'état.")
+            BluetoothProfile.STATE_DISCONNECTED
+        }
+        // Mise à jour de l'état courant si nécessaire
         if (connectionState == BluetoothProfile.STATE_CONNECTED || connectionState == BluetoothProfile.STATE_DISCONNECTED) {
-            mIsConnecting = false
+            mCurrentState = connectionState
         }
-        if (!mIsConnecting) {
-            return connectionState
+        if (mCurrentState == STATE_CONNECTING) {
+            Timber.d("Bug de déconnexion, tentative de mise en connexion")
+            return BluetoothProfile.STATE_CONNECTING
         }
-        Log.d(TAG, "Disconnecting bug, trying to set connecting")
-        return BluetoothProfile.STATE_CONNECTING // généralement 1
+        return connectionState
     }
 
     override fun connect(device: BluetoothDevice) {
         setDevice(device)
-        mIsConnecting = true
+        mCurrentState = STATE_CONNECTING
         if (device.bondState == BluetoothDevice.BOND_BONDED) {
             if (getConnectionState() == BluetoothProfile.STATE_DISCONNECTED) {
-                Log.d(TAG, "Already bonded, connect A2DP directly")
+                Timber.d("Déjà appairé, connexion A2DP directe")
                 connectA2dp()
                 return
             } else {
-                mIsConnecting = false
+                mCurrentState = BluetoothProfile.STATE_DISCONNECTED
                 return
             }
         }
-        Log.d(TAG, "Device not bonded, state=${device.bondState}")
-        mIsConnecting = false
+        Timber.d("Appareil non appairé, état=${device.bondState}")
+        mCurrentState = BluetoothProfile.STATE_DISCONNECTED
     }
 
     override fun disconnect() {
@@ -89,60 +107,77 @@ class A2dpHandler(
     }
 
     private fun connectA2dp() {
-        if (mA2dpProfile == null) return
+        if (a2dpProfile == null) return
 
+        // Pour les versions antérieures, définir la priorité
         if (Build.VERSION.SDK_INT < 26) {
             setPriority(mDevice, 100)
+        }
+
+        // Vérification de la permission avant d'invoquer la méthode connect()
+        if (ContextCompat.checkSelfPermission(mContext, BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            Timber.e("Permission BLUETOOTH_CONNECT non accordée.")
+            return
         }
 
         try {
             val connectMethod: Method = BluetoothA2dp::class.java.getMethod("connect", BluetoothDevice::class.java)
             connectMethod.isAccessible = true
-            connectMethod.invoke(mA2dpProfile, mDevice)
+            connectMethod.invoke(a2dpProfile, mDevice)
+        } catch (e: SecurityException) {
+            Timber.e(e, "Erreur de sécurité lors de la connexion A2DP")
         } catch (e: IllegalAccessException) {
-            e.printStackTrace()
-            Log.e(TAG, "Illegal Access! $e")
+            Timber.e(e, "Accès illégal!")
         } catch (e: NoSuchMethodException) {
-            e.printStackTrace()
-            Log.e(TAG, "Unable to find connect(BluetoothDevice) method in BluetoothA2dp proxy.")
+            Timber.e(e, "Méthode connect(BluetoothDevice) introuvable dans le proxy BluetoothA2dp.")
         } catch (e: InvocationTargetException) {
-            e.printStackTrace()
-            Log.e(TAG, "Unable to invoke connect(BluetoothDevice) method on proxy. $e")
+            Timber.e(e, "Impossible d'invoquer la méthode connect(BluetoothDevice) sur le proxy.")
         }
     }
 
     private fun disconnectA2dp() {
-        if (mA2dpProfile == null) return
+        if (a2dpProfile == null) return
 
         if (Build.VERSION.SDK_INT < 26) {
             setPriority(mDevice, 0)
         }
 
+        if (ContextCompat.checkSelfPermission(mContext, BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            Timber.e("Permission BLUETOOTH_CONNECT non accordée.")
+            return
+        }
+
         try {
             val disconnectMethod: Method = BluetoothA2dp::class.java.getMethod("disconnect", BluetoothDevice::class.java)
             disconnectMethod.isAccessible = true
-            disconnectMethod.invoke(mA2dpProfile, mDevice)
+            disconnectMethod.invoke(a2dpProfile, mDevice)
+        } catch (e: SecurityException) {
+            Timber.e(e, "Erreur de sécurité lors de la déconnexion A2DP")
         } catch (e: IllegalAccessException) {
-            e.printStackTrace()
-            Log.e(TAG, "Illegal Access! $e")
+            Timber.e(e, "Accès illégal!")
         } catch (e: NoSuchMethodException) {
-            e.printStackTrace()
-            Log.e(TAG, "Unable to find disconnect(BluetoothDevice) method in BluetoothA2dp proxy.")
+            Timber.e(e, "Méthode disconnect(BluetoothDevice) introuvable dans le proxy BluetoothA2dp.")
         } catch (e: InvocationTargetException) {
-            e.printStackTrace()
-            Log.e(TAG, "Unable to invoke disconnect(BluetoothDevice) method on proxy. $e")
+            Timber.e(e, "Impossible d'invoquer la méthode disconnect(BluetoothDevice) sur le proxy.")
         }
     }
 
     private fun setPriority(device: BluetoothDevice?, priority: Int) {
-        if (mA2dpProfile == null) return
+        if (a2dpProfile == null) return
+
+        if (ContextCompat.checkSelfPermission(mContext, BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+            Timber.e("Permission BLUETOOTH_CONNECT non accordée pour définir la priorité.")
+            return
+        }
 
         try {
-            val setPriorityMethod: Method = BluetoothA2dp::class.java.getMethod("setPriority", BluetoothDevice::class.java, Int::class.javaPrimitiveType)
-            setPriorityMethod.invoke(mA2dpProfile, device, priority)
+            val setPriorityMethod: Method = BluetoothA2dp::class.java.getMethod(
+                "setPriority", BluetoothDevice::class.java, Int::class.javaPrimitiveType)
+            setPriorityMethod.invoke(a2dpProfile, device, priority)
+        } catch (e: SecurityException) {
+            Timber.e(e, "Erreur de sécurité lors de la définition de la priorité")
         } catch (e: Exception) {
-            Log.d(TAG, e.toString())
-            e.printStackTrace()
+            Timber.d(e, "Erreur lors de la définition de la priorité")
         }
     }
 }
