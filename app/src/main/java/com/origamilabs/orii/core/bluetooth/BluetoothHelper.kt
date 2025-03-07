@@ -2,10 +2,13 @@ package com.origamilabs.orii.core.bluetooth
 
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.util.Log
 
 object BluetoothHelper {
+    const val REQUEST_CODE_BLUETOOTH_CONNECT = 1001
+
     private const val TAG = "BluetoothHelper"
     private const val beginCvcAddress = "30:1F:9A:C0:00:00"
     private const val beginPiTechAddress = "F4:45:ED:21:90:1F"
@@ -24,9 +27,9 @@ object BluetoothHelper {
         return (address.compareTo(beginPiTechAddress, ignoreCase = true) >= 0 &&
                 address.compareTo(endPiTechAddress, ignoreCase = true) <= 0)
                 || (address.compareTo(beginSecondAddress, ignoreCase = true) >= 0 &&
-                    address.compareTo(endSecondAddress, ignoreCase = true) <= 0)
+                address.compareTo(endSecondAddress, ignoreCase = true) <= 0)
                 || (address.compareTo(beginCvcAddress, ignoreCase = true) >= 0 &&
-                    address.compareTo(endCvcAddress, ignoreCase = true) <= 0)
+                address.compareTo(endCvcAddress, ignoreCase = true) <= 0)
     }
 
     /**
@@ -63,5 +66,13 @@ object BluetoothHelper {
             initBluetoothAdapter(context)
         }
         return mBluetoothAdapter
+    }
+
+    /**
+     * Obtient le proxy pour le profil Bluetooth spécifié.
+     * Retourne vrai si le proxy est obtenu, sinon faux.
+     */
+    fun getProfileProxy(context: Context, serviceListener: BluetoothProfile.ServiceListener, profile: Int): Boolean {
+        return getBluetoothAdapter(context)?.getProfileProxy(context, serviceListener, profile) ?: false
     }
 }

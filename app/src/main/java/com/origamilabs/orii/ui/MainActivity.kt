@@ -11,7 +11,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.tabs.TabLayout
 import com.origamilabs.orii.R
+import com.origamilabs.orii.core.bluetooth.BluetoothHelper
+import com.origamilabs.orii.core.bluetooth.connection.PermissionRequestDelegate
 import com.origamilabs.orii.databinding.MainActivityBinding
 import com.origamilabs.orii.ui.main.alerts.AlertsFragment
 import com.origamilabs.orii.ui.main.help.HelpFragment
@@ -20,11 +23,6 @@ import com.origamilabs.orii.ui.main.settings.SettingsFragment
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
-
-// Interface top-level pour la délégation de la demande de permission
-interface PermissionRequestDelegate {
-    fun requestBluetoothPermission()
-}
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity(), PermissionRequestDelegate {
@@ -36,12 +34,24 @@ class MainActivity : AppCompatActivity(), PermissionRequestDelegate {
     private lateinit var binding: MainActivityBinding
     private val sharedViewModel: SharedViewModel by viewModels()
     private var currentTabIndex: Int = 0
+
+    // Launcher pour demander plusieurs permissions Bluetooth, etc.
     private lateinit var bluetoothPermissionLauncher: ActivityResultLauncher<Array<String>>
 
-    private val onTabSelectedListener = object : com.google.android.material.tabs.TabLayout.OnTabSelectedListener {
-        override fun onTabReselected(tab: com.google.android.material.tabs.TabLayout.Tab) {}
-        override fun onTabUnselected(tab: com.google.android.material.tabs.TabLayout.Tab) {}
-        override fun onTabSelected(tab: com.google.android.material.tabs.TabLayout.Tab) {
+    // region Implémentation de PermissionRequestDelegate
+    override fun getHostActivity() = this
+
+    override fun requestBluetoothPermission(requestCode: Int) {
+        // Exemple d’implémentation : on se limite à BLUETOOTH_CONNECT
+        // via le launcher défini plus bas
+        bluetoothPermissionLauncher.launch(arrayOf(Manifest.permission.BLUETOOTH_CONNECT))
+    }
+    // endregion
+
+    private val onTabSelectedListener = object : TabLayout.OnTabSelectedListener {
+        override fun onTabReselected(tab: TabLayout.Tab) {}
+        override fun onTabUnselected(tab: TabLayout.Tab) {}
+        override fun onTabSelected(tab: TabLayout.Tab) {
             val tag = tab.tag as? String ?: ""
             Timber.d("Onglet sélectionné : $tag")
             val newFragment = when (tag) {
@@ -68,6 +78,7 @@ class MainActivity : AppCompatActivity(), PermissionRequestDelegate {
         binding.viewModel = sharedViewModel
 
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
+
         initTabs()
         setupBluetoothPermissionLauncher()
 
@@ -82,7 +93,11 @@ class MainActivity : AppCompatActivity(), PermissionRequestDelegate {
         ) { permissions ->
             permissions.forEach { (permission, isGranted) ->
                 if (isGranted) {
-                    Timber.d("Permission accordée : $permission")
+                    if (permission == Manifest.permission.BLUETOOTH_CONNECT) {
+                        Timber.d("BLUETOOTH_CONNECT accordée - relancer les opérations si nécessaire.")
+                    } else {
+                        Timber.d("Permission accordée : $permission")
+                    }
                 } else {
                     Timber.e("Permission refusée : $permission")
                 }
@@ -90,6 +105,10 @@ class MainActivity : AppCompatActivity(), PermissionRequestDelegate {
         }
     }
 
+    /**
+     * Vérifie si certaines permissions sont manquantes
+     * et lance la demande (POST_NOTIFICATIONS, BLUETOOTH_CONNECT, etc.).
+     */
     private fun checkBluetoothPermissions() {
         val permissionsToRequest = mutableListOf<String>()
 
@@ -137,11 +156,5 @@ class MainActivity : AppCompatActivity(), PermissionRequestDelegate {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putInt(SELECTED_TAB_INDEX, currentTabIndex)
-    }
-
-    // Implémentation de l'interface PermissionRequestDelegate.
-    // Cette méthode sera appelée par d'autres composants (ex. A2dpHandler) pour demander la permission BLUETOOTH_CONNECT.
-    override fun requestBluetoothPermission() {
-        bluetoothPermissionLauncher.launch(arrayOf(Manifest.permission.BLUETOOTH_CONNECT))
     }
 }

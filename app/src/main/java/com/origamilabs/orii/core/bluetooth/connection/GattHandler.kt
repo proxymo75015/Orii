@@ -19,7 +19,7 @@ import javax.inject.Inject
 
 class GattHandler @Inject constructor(
     @ApplicationContext context: Context,
-    callback: ConnectionHandler.Callback
+    callback: Callback
 ) : ConnectionHandler(context, "Gatt State Handler", callback) {
 
     private var mBluetoothGatt: BluetoothGatt? = null
