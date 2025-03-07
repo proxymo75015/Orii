@@ -7,6 +7,7 @@ import android.bluetooth.BluetoothSocket
 import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -19,14 +20,14 @@ import javax.inject.Singleton
 
 /**
  * Gestionnaire central de la connexion Bluetooth à la bague ORII et des communications GAIA.
- * (Remplace les singletons statiques précédents pour Bluetooth)
+ * Version mise à jour pour Android 14 (API 34) et compatible avec API 21+
  */
 @Singleton
 class OriiBluetoothManager @Inject constructor(
     private val context: Context,
     private val gaiaManager: GaiaManager
 ) {
-    // Récupération de l'adaptateur Bluetooth via BluetoothManager (méthode recommandée)
+    // Récupération de l'adaptateur Bluetooth via BluetoothManager en utilisant la méthode compatible API 21+
     private val adapter: BluetoothAdapter? =
         (context.getSystemService(Context.BLUETOOTH_SERVICE) as? BluetoothManager)?.adapter
 
@@ -37,12 +38,16 @@ class OriiBluetoothManager @Inject constructor(
     // UUID du service SPP (ou GAIA) de la bague ORII. Utilisation de SPP par défaut.
     private val oriiUuid: UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
 
-    /** Établir la connexion Bluetooth avec la bague (opération effectuée en background via coroutine). */
+    /**
+     * Établit la connexion Bluetooth avec la bague ORII.
+     * (Exécuté en background via coroutine)
+     */
     @Throws(IOException::class)
     suspend fun connect(deviceAddress: String) {
         withContext(Dispatchers.IO) {
-            // Vérifier que la permission BLUETOOTH_CONNECT est accordée
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT)
+            // Vérifier que la permission BLUETOOTH_CONNECT est accordée (API 31+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT)
                 != PackageManager.PERMISSION_GRANTED) {
                 throw SecurityException("Permission BLUETOOTH_CONNECT non accordée")
             }
@@ -50,7 +55,7 @@ class OriiBluetoothManager @Inject constructor(
             // Vérifier que l'adaptateur Bluetooth est disponible
             val bluetoothAdapter = adapter ?: throw IllegalStateException("Bluetooth adapter non disponible")
 
-            // Récupérer l’appareil Bluetooth par adresse MAC
+            // Récupérer l’appareil Bluetooth via son adresse MAC
             val device: BluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceAddress)
 
             // Création du socket RFCOMM (profil SPP ou spécifique GAIA)
@@ -62,7 +67,7 @@ class OriiBluetoothManager @Inject constructor(
                 socket = null
                 throw e  // propagation de l’erreur de connexion
             }
-            // Si la connexion réussit, on prépare les flux de communication
+            // Préparation des flux de communication en cas de succès
             socket?.let {
                 inputStream = it.inputStream
                 outputStream = it.outputStream
@@ -70,7 +75,9 @@ class OriiBluetoothManager @Inject constructor(
         }
     }
 
-    /** Envoi d’une commande GAIA à la bague via le socket connecté. */
+    /**
+     * Envoi d’une commande GAIA à la bague via le socket connecté.
+     */
     suspend fun sendGaiaCommand(commandId: Int, payload: ByteArray? = null) {
         withContext(Dispatchers.IO) {
             val packet: ByteArray = gaiaManager.createCommandPacket(commandId, payload)
@@ -79,7 +86,9 @@ class OriiBluetoothManager @Inject constructor(
         }
     }
 
-    /** Déconnexion et nettoyage du socket Bluetooth. */
+    /**
+     * Déconnecte et nettoie le socket Bluetooth.
+     */
     fun disconnect() {
         try {
             socket?.close()

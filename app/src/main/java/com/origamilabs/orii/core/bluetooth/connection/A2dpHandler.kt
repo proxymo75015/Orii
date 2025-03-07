@@ -12,25 +12,18 @@ import com.origamilabs.orii.core.bluetooth.BluetoothHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
 import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Method
 import javax.inject.Inject
 
-/**
- * Handler pour la connexion A2DP.
- *
- * Cette classe gère la connexion/déconnexion d'un périphérique A2DP en utilisant la réflexion
- * pour invoquer les méthodes "connect", "disconnect" et "setPriority" sur l'API BluetoothA2dp.
- */
 class A2dpHandler @Inject constructor(
     @ApplicationContext context: Context,
-    callback: ConnectionHandler.Callback
+    callback: ConnectionHandler.Callback,
+    private val permissionDelegate: PermissionRequestDelegate? = null
 ) : ConnectionHandler(context, "A2dp State Handler", callback) {
 
     companion object {
         private const val TAG = "A2dpHandler"
     }
 
-    // Utilisation d'un nom de variable plus court pour éviter la redondance
     private var a2dpProfile: BluetoothProfile? = null
 
     private val a2dpServiceListener = object : BluetoothProfile.ServiceListener {
@@ -38,19 +31,19 @@ class A2dpHandler @Inject constructor(
             Timber.d("Connecté au profil $profile")
             a2dpProfile = bluetoothProfile
         }
-
         override fun onServiceDisconnected(profile: Int) {
             a2dpProfile = null
         }
     }
 
     init {
-        // Vérification de la permission avant d'obtenir le proxy A2DP
-        if (ContextCompat.checkSelfPermission(context, BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
-            BluetoothHelper.getBluetoothAdapter(context)
-                ?.getProfileProxy(context, a2dpServiceListener, BluetoothProfile.A2DP)
+        if (mContext.hasBluetoothConnectPermission()) {
+            BluetoothHelper.getBluetoothAdapter(mContext)
+                ?.getProfileProxy(mContext, a2dpServiceListener, BluetoothProfile.A2DP)
         } else {
             Timber.e("Permission BLUETOOTH_CONNECT non accordée pour obtenir le proxy A2DP.")
+            permissionDelegate?.requestBluetoothPermission()
+                ?: Timber.e("Aucun delegate pour la demande de permission.")
         }
     }
 
@@ -59,8 +52,7 @@ class A2dpHandler @Inject constructor(
     }
 
     override fun getConnectionState(): Int {
-        // Vérification de la permission pour appeler getConnectionState()
-        if (ContextCompat.checkSelfPermission(mContext, BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+        if (!mContext.hasBluetoothConnectPermission()) {
             Timber.e("Permission BLUETOOTH_CONNECT non accordée lors de la récupération de l'état.")
             return BluetoothProfile.STATE_DISCONNECTED
         }
@@ -74,7 +66,6 @@ class A2dpHandler @Inject constructor(
             Timber.e(e, "Erreur de sécurité lors de la récupération de l'état.")
             BluetoothProfile.STATE_DISCONNECTED
         }
-        // Mise à jour de l'état courant si nécessaire
         if (connectionState == BluetoothProfile.STATE_CONNECTED || connectionState == BluetoothProfile.STATE_DISCONNECTED) {
             mCurrentState = connectionState
         }
@@ -107,77 +98,71 @@ class A2dpHandler @Inject constructor(
     }
 
     private fun connectA2dp() {
-        if (a2dpProfile == null) return
-
-        // Pour les versions antérieures, définir la priorité
-        if (Build.VERSION.SDK_INT < 26) {
-            setPriority(mDevice, 100)
-        }
-
-        // Vérification de la permission avant d'invoquer la méthode connect()
-        if (ContextCompat.checkSelfPermission(mContext, BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            Timber.e("Permission BLUETOOTH_CONNECT non accordée.")
-            return
-        }
-
-        try {
-            val connectMethod: Method = BluetoothA2dp::class.java.getMethod("connect", BluetoothDevice::class.java)
-            connectMethod.isAccessible = true
-            connectMethod.invoke(a2dpProfile, mDevice)
-        } catch (e: SecurityException) {
-            Timber.e(e, "Erreur de sécurité lors de la connexion A2DP")
-        } catch (e: IllegalAccessException) {
-            Timber.e(e, "Accès illégal!")
-        } catch (e: NoSuchMethodException) {
-            Timber.e(e, "Méthode connect(BluetoothDevice) introuvable dans le proxy BluetoothA2dp.")
-        } catch (e: InvocationTargetException) {
-            Timber.e(e, "Impossible d'invoquer la méthode connect(BluetoothDevice) sur le proxy.")
+        a2dpProfile?.let {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                setPriority(mDevice, 100)
+            }
+            if (!mContext.hasBluetoothConnectPermission()) {
+                Timber.e("Permission BLUETOOTH_CONNECT non accordée pour l'appel connect()")
+                return
+            }
+            runCatching {
+                val connectMethod = BluetoothA2dp::class.java.getMethod("connect", BluetoothDevice::class.java)
+                connectMethod.isAccessible = true
+                connectMethod.invoke(it, mDevice)
+            }.onFailure { exception ->
+                when (exception) {
+                    is IllegalAccessException -> Timber.e(exception, "Accès illégal!")
+                    is NoSuchMethodException -> Timber.e(exception, "Méthode connect(BluetoothDevice) introuvable.")
+                    is InvocationTargetException -> Timber.e(exception, "Impossible d'invoquer connect.")
+                    else -> Timber.e(exception, "Erreur inconnue lors de connectA2dp")
+                }
+            }
         }
     }
 
     private fun disconnectA2dp() {
-        if (a2dpProfile == null) return
-
-        if (Build.VERSION.SDK_INT < 26) {
-            setPriority(mDevice, 0)
-        }
-
-        if (ContextCompat.checkSelfPermission(mContext, BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
-            Timber.e("Permission BLUETOOTH_CONNECT non accordée.")
-            return
-        }
-
-        try {
-            val disconnectMethod: Method = BluetoothA2dp::class.java.getMethod("disconnect", BluetoothDevice::class.java)
-            disconnectMethod.isAccessible = true
-            disconnectMethod.invoke(a2dpProfile, mDevice)
-        } catch (e: SecurityException) {
-            Timber.e(e, "Erreur de sécurité lors de la déconnexion A2DP")
-        } catch (e: IllegalAccessException) {
-            Timber.e(e, "Accès illégal!")
-        } catch (e: NoSuchMethodException) {
-            Timber.e(e, "Méthode disconnect(BluetoothDevice) introuvable dans le proxy BluetoothA2dp.")
-        } catch (e: InvocationTargetException) {
-            Timber.e(e, "Impossible d'invoquer la méthode disconnect(BluetoothDevice) sur le proxy.")
+        a2dpProfile?.let {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                setPriority(mDevice, 0)
+            }
+            if (!mContext.hasBluetoothConnectPermission()) {
+                Timber.e("Permission BLUETOOTH_CONNECT non accordée pour l'appel disconnect()")
+                return
+            }
+            runCatching {
+                val disconnectMethod = BluetoothA2dp::class.java.getMethod("disconnect", BluetoothDevice::class.java)
+                disconnectMethod.isAccessible = true
+                disconnectMethod.invoke(it, mDevice)
+            }.onFailure { exception ->
+                when (exception) {
+                    is IllegalAccessException -> Timber.e(exception, "Accès illégal!")
+                    is NoSuchMethodException -> Timber.e(exception, "Méthode disconnect(BluetoothDevice) introuvable.")
+                    is InvocationTargetException -> Timber.e(exception, "Impossible d'invoquer disconnect.")
+                    else -> Timber.e(exception, "Erreur inconnue lors de disconnectA2dp")
+                }
+            }
         }
     }
 
     private fun setPriority(device: BluetoothDevice?, priority: Int) {
-        if (a2dpProfile == null) return
-
-        if (ContextCompat.checkSelfPermission(mContext, BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+        a2dpProfile ?: return
+        if (!mContext.hasBluetoothConnectPermission()) {
             Timber.e("Permission BLUETOOTH_CONNECT non accordée pour définir la priorité.")
             return
         }
-
-        try {
-            val setPriorityMethod: Method = BluetoothA2dp::class.java.getMethod(
-                "setPriority", BluetoothDevice::class.java, Int::class.javaPrimitiveType)
+        runCatching {
+            val setPriorityMethod = BluetoothA2dp::class.java.getMethod(
+                "setPriority", BluetoothDevice::class.java, Int::class.javaPrimitiveType
+            )
             setPriorityMethod.invoke(a2dpProfile, device, priority)
-        } catch (e: SecurityException) {
-            Timber.e(e, "Erreur de sécurité lors de la définition de la priorité")
-        } catch (e: Exception) {
-            Timber.d(e, "Erreur lors de la définition de la priorité")
+        }.onFailure {
+            Timber.d(it, "Erreur lors de la définition de la priorité")
         }
     }
+}
+
+// Extension function pour vérifier la permission BLUETOOTH_CONNECT
+private fun Context.hasBluetoothConnectPermission(): Boolean {
+    return ContextCompat.checkSelfPermission(this, BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
 }

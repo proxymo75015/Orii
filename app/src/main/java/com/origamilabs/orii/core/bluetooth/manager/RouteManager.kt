@@ -84,6 +84,7 @@ class RouteManager @Inject constructor(
             val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 intent?.getParcelableExtra("android.bluetooth.device.extra.DEVICE", BluetoothDevice::class.java)
             } else {
+                @Suppress("DEPRECATION")
                 intent?.getParcelableExtra("android.bluetooth.device.extra.DEVICE")
             }
             if (device == null || !BluetoothHelper.isOriiMacAddressInRange(device.address)) return

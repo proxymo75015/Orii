@@ -6,28 +6,17 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
 import timber.log.Timber
 
-/**
- * Classe abstraite qui gère la connexion Bluetooth.
- *
- * Elle définit des constantes d'état, démarre une coroutine périodique
- * pour mettre à jour l'état de la connexion, et informe un 'Callback' des changements d'état.
- *
- * Les affichages pour l'utilisateur sont en français.
- *
- * @property mContext Le contexte.
- * @property mCallback Le callback pour notifier les changements d'état.
- */
 abstract class ConnectionHandler(
     @ApplicationContext protected val mContext: Context,
-    threadName: String,
-    private var mCallback: Callback?  // Modifié en private
+    private val threadName: String,
+    private var mCallback: Callback?
 ) {
 
     companion object {
         const val STATE_DISCONNECTED = 0
         const val STATE_CONNECTING = 1
         const val STATE_CONNECTED = 2
-        private const val STATE_DISCONNECTING = 3  // Modifié en private
+        private const val STATE_DISCONNECTING = 3
         private const val TRIGGER_INTERVAL: Long = 5000
 
         fun getConnectionStateString(state: Int): String = when (state) {
@@ -42,9 +31,6 @@ abstract class ConnectionHandler(
     protected var mDevice: BluetoothDevice? = null
     protected var mCurrentState: Int = STATE_DISCONNECTED
 
-    // Utilisation d'une CoroutineScope pour la mise à jour périodique de l'état
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
     interface Callback {
         fun onStateChanged(oldState: Int, newState: Int)
     }
@@ -54,11 +40,12 @@ abstract class ConnectionHandler(
     abstract fun disconnect()
     protected abstract fun getConnectionState(): Int
 
-    fun isConnecting(): Boolean = mCurrentState == STATE_CONNECTING
-    fun isConnected(): Boolean = mCurrentState == STATE_CONNECTED
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    fun isConnecting(): Boolean = (mCurrentState == STATE_CONNECTING)
+    fun isConnected(): Boolean = (mCurrentState == STATE_CONNECTED)
 
     fun start() {
-        // Lancer une coroutine pour mettre à jour l'état périodiquement
         scope.launch {
             while (isActive) {
                 val state = getConnectionState()
@@ -79,7 +66,7 @@ abstract class ConnectionHandler(
         mDevice = device
     }
 
-    private fun tryUpdateState(state: Int) {  // Modifié en private
+    private fun tryUpdateState(state: Int) {
         Timber.d(getConnectionStateString(state))
         updateState(mCurrentState, state)
         mCurrentState = state

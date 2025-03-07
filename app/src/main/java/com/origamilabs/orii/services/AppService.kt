@@ -17,6 +17,7 @@ import android.os.Process
 import android.speech.tts.TextToSpeech
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import android.app.ServiceInfo
 import com.origamilabs.orii.Constants
 import com.origamilabs.orii.R
 import com.origamilabs.orii.controller.DeviceController
@@ -38,15 +39,7 @@ import com.origamilabs.orii.utils.DeviceLocale
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.concurrent.schedule
 
-/**
- * Service principal de l'application ORII, chargé de gérer les opérations locales telles que
- * la communication Bluetooth avec la bague, la gestion des notifications et la synthèse vocale.
- *
- * Les fonctionnalités de mise à jour du firmware et les connexions à des serveurs externes ont été supprimées
- * pour rendre l'application autonome.
- */
 class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListener, OnIncomingCallReceivedListener {
 
     companion object {
@@ -61,15 +54,10 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
     private var phoneCallReceiver: PhoneCallReceiver? = null
     private var smsReceiver: SmsReceiver? = null
     private var tts: TextToSpeech? = null
-
     private var showingLowBatteryNotification = false
-
     private val eventListeners: ArrayList<AppServiceListener> = arrayListOf()
-
-    // Binder pour la liaison du service
     private val binder = LocalBinder()
 
-    // Callback de connexion Bluetooth
     private val connectionCallback = object : ConnectionManager.Callback {
         override fun onA2dpStateChange(p0: Int, p1: Int) {}
         override fun onGattStateChange(p0: Int, p1: Int) {}
@@ -82,7 +70,6 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
         }
     }
 
-    // Callback pour les commandes Bluetooth
     private val commandCallback = object : CommandManager.Callback {
         override fun onDataReceived(intent: Intent) {
             val action = intent.action
@@ -113,68 +100,75 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
                         deviceController?.callMediaPlayOrPause()
                     CommandManager.ACTION_VOICE_ASSISTANT_STATE_CHANGED ->
                         insertVaTriggerCount(if (intent.getIntExtra(CommandManager.EXTRA_DATA, -1) == 0) 1 else 0)
-                    // Suppression de la branche firmware puisque la mise à jour externe est désactivée
                     CommandManager.ACTION_CHECK_GESTURE_MODE ->
                         AppManager.instance.sharedPreferences.setGestureMode(intent.getIntExtra(CommandManager.EXTRA_DATA, 0))
                     CommandManager.ACTION_MIC_MODE_CHANGED ->
                         AppManager.instance.sharedPreferences.setMicMode(intent.getIntExtra(CommandManager.EXTRA_DATA, -1))
                 }
             }
-            // Notifier les listeners d'événements
             for (listener in eventListeners) {
                 listener.onDataReceived(intent)
             }
         }
     }
 
-    // Interface pour les écouteurs d'événements du service
     interface AppServiceListener {
         fun onDataReceived(intent: Intent)
     }
 
-    fun addListener(listener: AppServiceListener): Boolean {
-        return eventListeners.add(listener)
-    }
-
-    fun removeListener(listener: AppServiceListener): Boolean {
-        return eventListeners.remove(listener)
-    }
+    fun addListener(listener: AppServiceListener): Boolean = eventListeners.add(listener)
+    fun removeListener(listener: AppServiceListener): Boolean = eventListeners.remove(listener)
 
     override fun onCreate() {
         super.onCreate()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                getString(R.string.notification_connection_channel_id),
+                "Service ORII",
+                NotificationManager.IMPORTANCE_LOW
+            )
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            notificationManager.createNotificationChannel(channel)
+        }
 
-        // Vérifier que le NotificationListenerService est actif
         isNotificationListenerServiceRunning(this)
-
         mMessageHandler = MessageHandler()
-
         smsReceiver = SmsReceiver().also {
             registerReceiver(it, IntentFilter(Constants.ACTION_SMS_RECEIVED))
             it.setOnSmsReceivedListener(this)
         }
-
         notificationReceiver = NotificationReceiver().also {
             registerReceiver(it, IntentFilter(Constants.ACTION_NOTIFICATION_RECEIVED))
             it.setOnNotificationReceivedListener(this)
         }
-
         incomingCallReceiver = IncomingCallReceiver().also {
             registerReceiver(it, IntentFilter(Constants.ACTION_INCOMING_CALL_RECEIVED))
             it.setOnIncomingCallReceivedListener(this)
         }
-
         phoneCallReceiver = PhoneCallReceiver().also {
             registerReceiver(it, IntentFilter("android.intent.action.PHONE_STATE"))
         }
-
         deviceController = DeviceController(this)
-
         setupTTS()
-
         ConnectionManager.getInstance().addCallback(connectionCallback)
         CommandManager.getInstance().addCallback(commandCallback)
+    }
 
-        // Suppression de l'initialisation de la vérification de version d'application
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val channelId = getString(R.string.notification_connection_channel_id)
+        val notification = NotificationCompat.Builder(this, channelId)
+            .setSmallIcon(R.drawable.ic_statusbar)
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText("Service Bluetooth actif")
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(1, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE)
+        } else {
+            startForeground(1, notification)
+        }
+        return START_STICKY
     }
 
     fun updateOriiBatteryLevel(batteryLevel: Int) {
@@ -209,10 +203,6 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
         showingLowBatteryNotification = false
     }
 
-    /**
-     * Exécute l'action associée à un geste personnalisé.
-     * Pour l'action WEB_HOOK, l'appel externe est désactivé en mode autonome.
-     */
     fun triggerCustomCommandAction(triggerGesture: String) {
         val customCommandAction = when (triggerGesture) {
             CommandManager.ACTION_GESTURE_FLAT_TRIPLE_TAP -> AppManager.instance.sharedPreferences.flatTripleTapAction
@@ -220,28 +210,19 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
             else -> CustomCommandAction.WEB_HOOK
         }
         when (customCommandAction) {
-            CustomCommandAction.WEB_HOOK -> {
-                Log.d(TAG, "WEB_HOOK action est désactivée en mode autonome")
-                // Aucun appel externe n'est effectué
-            }
-            CustomCommandAction.DO_NOT_DISTURB_MODE ->
-                deviceController?.switchDisturbMode()
-            CustomCommandAction.FLASHLIGHT_SWITCH ->
-                deviceController?.switchFlashlight()
-            CustomCommandAction.SCREEN_ON_OFF ->
-                deviceController?.switchScreenLock()
-            CustomCommandAction.TIME_READOUT ->
-                speakCurrentTime(false)
-            CustomCommandAction.CALENDAR_READOUT ->
-                speakCalendarEvent()
+            CustomCommandAction.WEB_HOOK -> Log.d(TAG, "WEB_HOOK action est désactivée en mode autonome")
+            CustomCommandAction.DO_NOT_DISTURB_MODE -> deviceController?.switchDisturbMode()
+            CustomCommandAction.FLASHLIGHT_SWITCH -> deviceController?.switchFlashlight()
+            CustomCommandAction.SCREEN_ON_OFF -> deviceController?.switchScreenLock()
+            CustomCommandAction.TIME_READOUT -> speakCurrentTime(false)
+            CustomCommandAction.CALENDAR_READOUT -> speakCalendarEvent()
         }
     }
 
     private fun speakCurrentTime(isShort: Boolean) {
-        // Pour la France, on utilise explicitement Locale.FRANCE
-        val frenchLocale = java.util.Locale.FRANCE
+        val frenchLocale = Locale.FRANCE
         val simpleDateFormat = when {
-            isShort -> SimpleDateFormat("HH:mm", frenchLocale) // Format 24h pour la France
+            isShort -> SimpleDateFormat("HH:mm", frenchLocale)
             DeviceLocale.instance.deviceLocale.language.equals("zh", ignoreCase = true) ->
                 SimpleDateFormat("MMMMdd日EEEE, HH:mm", DeviceLocale.instance.deviceLocale)
             else -> SimpleDateFormat("EEEE, dd MMMM, HH:mm", frenchLocale)
@@ -277,19 +258,13 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
     private fun setupTTS() {
         tts = TextToSpeech(this) { status ->
             if (status == TextToSpeech.SUCCESS) {
-                tts?.let {
-                    setTTSLanguage(it)
-                }
+                tts?.let { setTTSLanguage(it) }
                 mIncomingCallHandler = IncomingCallHandler()
                 phoneCallReceiver?.addListener(mIncomingCallHandler!!)
             }
         }
     }
 
-    /**
-     * Configure la langue du moteur TTS.
-     * Pour la France, la langue est forcée en français et la tâche de changement de langue est notifiée via CommandManager.
-     */
     fun setTTSLanguage(tts: TextToSpeech) {
         val deviceLocale = DeviceLocale.instance.deviceLocale
         when {
@@ -297,7 +272,6 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
                 CommandManager.getInstance().putCallChangeLanguageTask(1)
             }
             deviceLocale.language.equals("fr", ignoreCase = true) -> {
-                // Pour la France, on utilise Locale.FRANCE et on envoie une valeur spécifique (ici 2)
                 CommandManager.getInstance().putCallChangeLanguageTask(2)
             }
             else -> {
@@ -305,7 +279,7 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
             }
         }
         tts.language = if (deviceLocale.language.equals("fr", ignoreCase = true)) {
-            java.util.Locale.FRANCE
+            Locale.FRANCE
         } else {
             deviceLocale
         }
@@ -339,15 +313,12 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
         ttsInstance.speak(speech, TextToSpeech.QUEUE_FLUSH, null, null)
     }
 
-    override fun onBind(intent: Intent?): IBinder {
-        return binder
-    }
+    override fun onBind(intent: Intent?): IBinder = binder
 
     inner class LocalBinder : Binder() {
         fun getService(): AppService = this@AppService
     }
 
-    // OnSmsReceivedListener
     override fun onSmsReceived(sender: String, message: String) {
         Log.d(TAG, "onSmsReceived")
         mMessageHandler?.addMessage("sms", sender, message)
@@ -365,7 +336,6 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
         }
     }
 
-    // OnNotificationReceivedListener
     override fun onNotificationReceived(packageName: String, sender: String, message: String) {
         Log.d(TAG, "onNotificationReceived")
         mMessageHandler?.addMessage(packageName, sender, message)
@@ -383,10 +353,21 @@ class AppService : Service(), OnSmsReceivedListener, OnNotificationReceivedListe
         }
     }
 
-    // OnIncomingCallReceivedListener
     override fun onIncomingCallReceived(packageName: String) {
         Log.d(TAG, "onIncomingCallReceived and packageName is: $packageName")
         CommandManager.getInstance().putCallAllowLinePhonecallPickUpTask()
-        // Suppression de l'appel au suivi analytique externe
+    }
+
+    private fun isNotificationListenerServiceRunning(context: Context): Boolean {
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val runningServices = am.getRunningServices(Integer.MAX_VALUE)
+        val componentName = ComponentName(context, OriiNotificationListenerService::class.java)
+        for (serviceInfo in runningServices) {
+            if (serviceInfo.service == componentName) return true
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
+        }
+        return false
     }
 }
