@@ -165,5 +165,9 @@ class HeadsetHandler @Inject constructor(
 
 // Extension function pour vérifier la permission BLUETOOTH_CONNECT
 private fun Context.hasBluetoothConnectPermission(): Boolean {
-    return ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+    return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) { // Android 12+ (API 31+)
+        ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+    } else {
+        true // Avant Android 12, cette permission n'est pas nécessaire
+    }
 }
