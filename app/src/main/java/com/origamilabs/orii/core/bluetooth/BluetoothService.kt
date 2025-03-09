@@ -1,4 +1,4 @@
-package com.origamilabs.orii.core.bluetooth.connection
+package com.origamilabs.orii.core.bluetooth
 
 import android.app.Service
 import android.content.Intent
@@ -20,7 +20,7 @@ class BluetoothService @Inject constructor() : Service() {
     @Inject lateinit var scanManager: ScanManager
     @Inject lateinit var connectionManager: ConnectionManager
 
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     inner class LocalBinder : Binder() {
         fun getService(): BluetoothService = this@BluetoothService
@@ -35,34 +35,30 @@ class BluetoothService @Inject constructor() : Service() {
 
     override fun onBind(intent: Intent?): IBinder {
         Timber.d("BluetoothService onBind appelé")
-
         initializeManagers()
-
         return binder
     }
 
-    private fun serviceInitialized() = scanManager.isInitialized() && connectionManager.isInitialized()
-
     private fun initializeManagers() {
-        launch {
+        serviceScope.launch {
             try {
-                if (!scanManager.isInitialized()) {
-                    scanManager.initialize(this@BluetoothService)
+                if (!::scanManager.isInitialized) {
+                    Timber.e("scanManager n'est pas initialisé par Hilt.")
+                } else {
+                    scanManager.initialize()
                 }
-                if (!connectionManager.isInitialized()) {
-                    connectionManager.initialize(this@BluetoothService)
+
+                if (!::connectionManager.isInitialized) {
+                    Timber.e("connectionManager n'est pas initialisé par Hilt.")
+                } else {
+                    connectionManager.initialize()
                 }
+
                 Timber.d("Managers initialisés avec succès")
             } catch (e: Exception) {
                 Timber.e(e, "Erreur lors de l'initialisation des managers")
             }
         }
-    }
-
-    private fun serviceScope() = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-
-    private fun serviceScopeLaunch(block: suspend () -> Unit) {
-        serviceScope.launch { block -> block() }
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
