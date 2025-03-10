@@ -1,5 +1,6 @@
 package com.origamilabs.orii.core.bluetooth.connection
 
+import android.os.Build
 import android.Manifest
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
@@ -19,7 +20,8 @@ import javax.inject.Inject
 
 class GattHandler @Inject constructor(
     @ApplicationContext context: Context,
-    callback: Callback
+    callback: Callback,
+    private val permissionDelegate: PermissionRequestDelegate? = null
 ) : ConnectionHandler(context, "Gatt State Handler", callback) {
 
     private var mBluetoothGatt: BluetoothGatt? = null
@@ -41,6 +43,7 @@ class GattHandler @Inject constructor(
             Timber.d("onServicesDiscovered() status=$status")
         }
 
+        @Suppress("DEPRECATION") // Ajoute cette ligne précisément ici
         @Deprecated(
             message = "Deprecated in API 33. Use onCharacteristicChanged with ByteArray parameter.",
             replaceWith = ReplaceWith("onCharacteristicChanged(gatt, characteristic, value)"),
@@ -71,34 +74,51 @@ class GattHandler @Inject constructor(
 
     override fun connect(device: BluetoothDevice) {
         setDevice(device)
-        mIsConnectingGatt = true
+        mCurrentState = STATE_CONNECTING
+
         if (mContext.hasBluetoothConnectPermission()) {
             try {
                 mBluetoothGatt = device.connectGatt(mContext, false, mGattCallback)
             } catch (e: SecurityException) {
-                Timber.e(e, "Permission BLUETOOTH_CONNECT manquante")
+                Timber.e(e, "SecurityException lors de connectGatt (ligne 90)")
+                permissionDelegate?.requestBluetoothPermission()
+                mBluetoothGatt = null
                 mIsConnectingGatt = false
             }
         } else {
-            Timber.e("Permission BLUETOOTH_CONNECT non accordée pour connectGatt.")
+            Timber.e("Permission BLUETOOTH_CONNECT refusée avant connectGatt (ligne 90)")
+            permissionDelegate?.requestBluetoothPermission()
+            mBluetoothGatt = null
             mIsConnectingGatt = false
         }
     }
 
     override fun disconnect() {
-        runCatching {
-            mBluetoothGatt?.disconnect()
-        }.onFailure {
-            Timber.e(it, "Erreur lors de la déconnexion")
+        if (mContext.hasBluetoothConnectPermission()) {
+            try {
+                mBluetoothGatt?.disconnect()
+            } catch (e: SecurityException) {
+                Timber.e(e, "SecurityException lors de disconnect (ligne 99)")
+                permissionDelegate?.requestBluetoothPermission()
+            }
+        } else {
+            Timber.e("Permission BLUETOOTH_CONNECT refusée avant disconnect (ligne 99)")
+            permissionDelegate?.requestBluetoothPermission()
         }
     }
 
     @Deprecated("Méthode dépréciée dans la classe parente.")
     override fun close() {
-        runCatching {
-            mBluetoothGatt?.close()
-        }.onFailure {
-            Timber.e(it, "Erreur lors de la fermeture du GATT")
+        if (mContext.hasBluetoothConnectPermission()) {
+            try {
+                mBluetoothGatt?.close()
+            } catch (e: SecurityException) {
+                Timber.e(e, "SecurityException lors de close (ligne 112)")
+                permissionDelegate?.requestBluetoothPermission()
+            }
+        } else {
+            Timber.e("Permission BLUETOOTH_CONNECT refusée avant close (ligne 112)")
+            permissionDelegate?.requestBluetoothPermission()
         }
         mBluetoothGatt = null
     }
@@ -119,5 +139,10 @@ class GattHandler @Inject constructor(
 
 // Extension function pour vérifier la permission BLUETOOTH_CONNECT
 private fun Context.hasBluetoothConnectPermission(): Boolean {
-    return ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12+ (API 31+)
+        ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED
+    } else {
+        true // Avant Android 12, la permission BLUETOOTH_CONNECT n'existe pas
+    }
 }
+

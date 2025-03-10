@@ -4,74 +4,70 @@ import android.app.Service
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
-import android.util.Log
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 import com.origamilabs.orii.core.bluetooth.manager.ConnectionManager
-import com.origamilabs.orii.core.bluetooth.manager.RouteManager
 import com.origamilabs.orii.core.bluetooth.manager.ScanManager
 
 @AndroidEntryPoint
-class BluetoothService : Service() {
+class BluetoothService @Inject constructor() : Service() {
 
-    companion object {
-        private const val TAG = "BluetoothService"
-    }
-
-    // Binder pour lier le service à un client
-    private val mBinder = LocalBinder()
-
-    // Scope dédié aux opérations asynchrones du service.
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-
-    // Injection des managers via Hilt
     @Inject lateinit var scanManager: ScanManager
     @Inject lateinit var connectionManager: ConnectionManager
-    @Inject lateinit var routeManager: RouteManager
+
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    inner class LocalBinder : Binder() {
+        fun getService(): BluetoothService = this@BluetoothService
+    }
+
+    private val binder = LocalBinder()
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG, "Service créé")
+        Timber.d("BluetoothService créé")
     }
 
     override fun onBind(intent: Intent?): IBinder {
-        Log.d(TAG, "onBind")
-        // Lancement d'une coroutine pour initialiser les managers de manière asynchrone
+        Timber.d("BluetoothService onBind appelé")
+        initializeManagers()
+        return binder
+    }
+
+    private fun initializeManagers() {
         serviceScope.launch {
-            withContext(Dispatchers.IO) {
-                try {
-                    if (!scanManager.isInitialized()) {
-                        scanManager.initialize(this@BluetoothService)
-                    }
-                    if (!connectionManager.isInitialized()) {
-                        connectionManager.initialize(this@BluetoothService)
-                    }
-                    if (!routeManager.isInitialized()) {
-                        routeManager.initialize(this@BluetoothService)
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Erreur lors de l'initialisation des managers", e)
+            try {
+                if (!::scanManager.isInitialized) {
+                    Timber.e("scanManager n'est pas initialisé par Hilt.")
+                } else {
+                    scanManager.initialize()
                 }
+
+                if (!::connectionManager.isInitialized) {
+                    Timber.e("connectionManager n'est pas initialisé par Hilt.")
+                } else {
+                    connectionManager.initialize()
+                }
+
+                Timber.d("Managers initialisés avec succès")
+            } catch (e: Exception) {
+                Timber.e(e, "Erreur lors de l'initialisation des managers")
             }
         }
-        return mBinder
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
+        Timber.d("BluetoothService onUnbind appelé")
         return super.onUnbind(intent)
     }
 
     override fun onDestroy() {
-        serviceScope.cancel() // Annule les tâches asynchrones en cours
+        Timber.d("BluetoothService détruit")
         super.onDestroy()
-        Log.d(TAG, "Service détruit")
-    }
-
-    /**
-     * Binder local permettant aux clients d'accéder au service.
-     */
-    inner class LocalBinder : Binder() {
-        fun getService(): BluetoothService = this@BluetoothService
     }
 }
