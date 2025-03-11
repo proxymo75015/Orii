@@ -6,19 +6,18 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
-import android.util.Log
-import com.facebook.drawee.backends.pipeline.Fresco
 import com.origamilabs.orii.services.AppService
 import com.origamilabs.orii.core.bluetooth.BluetoothService
+import com.origamilabs.orii.BuildConfig
 import dagger.hilt.android.HiltAndroidApp
+import timber.log.Timber
 
 @HiltAndroidApp
 class MainApplication : Application() {
 
     companion object {
         const val IS_PRODUCTION: Boolean = true
-        private const val TAG: String = "MainApplication"
-        const val VERSION_NAME: String = "2.2.16"
+        const val VERSION_NAME: String = "3.0.00"
     }
 
     var appService: AppService? = null
@@ -26,13 +25,13 @@ class MainApplication : Application() {
 
     private val appServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-            Log.d(TAG, "AppService connecté")
+            Timber.d("AppService connecté")
             service?.let {
                 appService = (it as AppService.LocalBinder).getService()
             }
         }
         override fun onServiceDisconnected(name: ComponentName?) {
-            Log.d(TAG, "AppService déconnecté")
+            Timber.d("AppService déconnecté")
             appService = null
         }
     }
@@ -41,7 +40,11 @@ class MainApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        Fresco.initialize(this)
+        // Initialisation de Timber (DebugTree en mode debug)
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
+        // Suppression de Fresco puisque nous utilisons Glide pour le chargement d'images
 
         val appServiceIntent = Intent(this, AppService::class.java)
         bindService(appServiceIntent, appServiceConnection, Context.BIND_AUTO_CREATE)
@@ -52,7 +55,7 @@ class MainApplication : Application() {
         try {
             unbindService(appServiceConnection)
         } catch (e: IllegalArgumentException) {
-            Log.w(TAG, "Service déjà déconnecté : ${e.message}")
+            Timber.w("Service déjà déconnecté : ${e.message}")
         }
     }
 
@@ -61,12 +64,12 @@ class MainApplication : Application() {
             val intent = Intent(this, BluetoothService::class.java)
             bindService(intent, object : ServiceConnection {
                 override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
-                    Log.d(TAG, "BluetoothService connecté")
+                    Timber.d("BluetoothService connecté")
                     bluetoothService = (service as BluetoothService.LocalBinder).getService()
                     onConnected()
                 }
                 override fun onServiceDisconnected(name: ComponentName?) {
-                    Log.d(TAG, "BluetoothService déconnecté")
+                    Timber.d("BluetoothService déconnecté")
                     bluetoothService = null
                 }
             }, Context.BIND_AUTO_CREATE)

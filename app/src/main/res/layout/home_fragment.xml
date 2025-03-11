@@ -1,24 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <data>
         <!-- Variable partagée pour le binding -->
         <variable
             name="sharedViewModel"
             type="com.origamilabs.orii.ui.SharedViewModel" />
-        <variable
-            name="canFirmwareUpdate"
-            type="Boolean" />
     </data>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <LinearLayout
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/home_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:padding="16dp">
 
             <!-- Image affichant le niveau de batterie -->
@@ -26,8 +24,78 @@
                 android:id="@+id/batteryLevelImageView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:src="@drawable/battery_level" />
+                android:src="@drawable/battery_level"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <!-- Layout pour afficher l'échec de connexion -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/connectFailLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/batteryLevelImageView"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="8dp">
+
+                <!-- Texte d'indication d'échec -->
+                <TextView
+                    android:id="@+id/failedHintTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Échec de connexion"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Layout pour affichage de la connexion établie -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/connectedLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/connectFailLayout"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:id="@+id/connectedTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Connecté"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Layout pour l'état de connexion en cours -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/connectingLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/connectedLayout"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="8dp">
+
+                <!-- Vous pouvez ajouter ici des éléments spécifiques à l'état "connecting" -->
+                <TextView
+                    android:id="@+id/statusTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Connexion en cours..."
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <!-- Image supplémentaire (par exemple, image recadrée de l'appareil) -->
+            <ImageView
+                android:id="@+id/croppedOriiImageView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_launcher_foreground"
+                app:layout_constraintTop_toBottomOf="@id/connectingLayout"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="8dp" />
 
             <!-- Bouton de test audio -->
             <Button
@@ -35,7 +103,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Tester le son"
-                android:layout_marginBottom="8dp" />
+                app:layout_constraintTop_toBottomOf="@id/croppedOriiImageView"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="8dp" />
 
             <!-- Texte de bienvenue -->
             <TextView
@@ -44,16 +114,19 @@
                 android:layout_height="wrap_content"
                 android:text="Bienvenue !"
                 android:textSize="24sp"
-                android:layout_marginBottom="8dp" />
+                app:layout_constraintTop_toBottomOf="@id/soundTestButton"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="8dp" />
 
-            <!-- Texte affichant la version du firmware -->
+            <!-- Texte générique (utilisé pour une autre information) -->
             <TextView
-                android:id="@+id/firmwareVersionTextView"
+                android:id="@+id/textView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Firmware :"
-                android:textSize="18sp"
-                android:layout_marginBottom="16dp" />
+                android:text="Informations complémentaires"
+                app:layout_constraintTop_toBottomOf="@id/welcomeTextView"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="8dp" />
 
             <!-- Bouton pour réessayer la connexion -->
             <Button
@@ -61,7 +134,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Réessayer"
-                android:layout_marginBottom="8dp" />
+                app:layout_constraintTop_toBottomOf="@id/textView"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="8dp" />
 
             <!-- Bouton pour arrêter la recherche -->
             <Button
@@ -69,8 +144,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Arrêter la recherche"
-                android:layout_marginBottom="8dp" />
+                app:layout_constraintTop_toBottomOf="@id/timeOutRetryButton"
+                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginTop="8dp" />
 
-        </LinearLayout>
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </ScrollView>
 </layout>
