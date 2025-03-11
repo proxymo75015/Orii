@@ -15,7 +15,7 @@ import androidx.databinding.DataBindingComponent;
 import androidx.databinding.ViewDataBinding;
 import androidx.lifecycle.MutableLiveData;
 import com.origamilabs.orii.R;
-import com.origamilabs.orii.ui.main.SharedViewModel;
+import com.origamilabs.orii.ui.SharedViewModel;
 import com.origamilabs.orii.ui.main.settings.SettingsViewModel;
 
 /* loaded from: classes2.dex */

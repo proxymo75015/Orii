@@ -1,6 +1,5 @@
 package com.origamilabs.orii.ui.main.help.ui.help
 
-import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -16,7 +15,6 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.origamilabs.orii.Constants
@@ -29,7 +27,7 @@ import com.origamilabs.orii.models.AppVersionInfo
 import com.origamilabs.orii.ui.MainApplication
 import com.origamilabs.orii.ui.common.AppVersionInfoDialogFragment
 import com.origamilabs.orii.ui.common.BtLocationEnableDialogFragment
-import com.origamilabs.orii.ui.main.SharedViewModel
+import com.origamilabs.orii.ui.SharedViewModel
 import com.origamilabs.orii.ui.main.home.update.UpdateActivity
 
 class FirmwareTestFragment : Fragment() {

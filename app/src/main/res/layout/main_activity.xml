@@ -6,7 +6,7 @@
         <!-- Déclaration du ViewModel si nécessaire -->
         <variable
             name="viewModel"
-            type="com.origamilabs.orii.ui.main.SharedViewModel" />
+            type="com.origamilabs.orii.ui.SharedViewModel" />
     </data>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout

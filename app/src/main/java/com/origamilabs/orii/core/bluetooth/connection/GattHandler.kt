@@ -24,6 +24,10 @@ class GattHandler @Inject constructor(
     private val permissionDelegate: PermissionRequestDelegate? = null
 ) : ConnectionHandler(context, "Gatt State Handler", callback) {
 
+    companion object {
+        private const val REQUEST_BT_PERMISSION = 1001  // Le requestCode explicite
+    }
+
     private var mBluetoothGatt: BluetoothGatt? = null
     private var mIsClosingGatt: Boolean = false
     private var mIsConnectingGatt: Boolean = false
@@ -81,13 +85,13 @@ class GattHandler @Inject constructor(
                 mBluetoothGatt = device.connectGatt(mContext, false, mGattCallback)
             } catch (e: SecurityException) {
                 Timber.e(e, "SecurityException lors de connectGatt (ligne 90)")
-                permissionDelegate?.requestBluetoothPermission()
+                permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
                 mBluetoothGatt = null
                 mIsConnectingGatt = false
             }
         } else {
             Timber.e("Permission BLUETOOTH_CONNECT refusée avant connectGatt (ligne 90)")
-            permissionDelegate?.requestBluetoothPermission()
+            permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
             mBluetoothGatt = null
             mIsConnectingGatt = false
         }
@@ -99,11 +103,11 @@ class GattHandler @Inject constructor(
                 mBluetoothGatt?.disconnect()
             } catch (e: SecurityException) {
                 Timber.e(e, "SecurityException lors de disconnect (ligne 99)")
-                permissionDelegate?.requestBluetoothPermission()
+                permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
             }
         } else {
             Timber.e("Permission BLUETOOTH_CONNECT refusée avant disconnect (ligne 99)")
-            permissionDelegate?.requestBluetoothPermission()
+            permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
         }
     }
 
@@ -114,11 +118,11 @@ class GattHandler @Inject constructor(
                 mBluetoothGatt?.close()
             } catch (e: SecurityException) {
                 Timber.e(e, "SecurityException lors de close (ligne 112)")
-                permissionDelegate?.requestBluetoothPermission()
+                permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
             }
         } else {
             Timber.e("Permission BLUETOOTH_CONNECT refusée avant close (ligne 112)")
-            permissionDelegate?.requestBluetoothPermission()
+            permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
         }
         mBluetoothGatt = null
     }
@@ -145,4 +149,3 @@ private fun Context.hasBluetoothConnectPermission(): Boolean {
         true // Avant Android 12, la permission BLUETOOTH_CONNECT n'existe pas
     }
 }
-

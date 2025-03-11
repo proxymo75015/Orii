@@ -22,6 +22,7 @@ class A2dpHandler @Inject constructor(
 
     companion object {
         private const val TAG = "A2dpHandler"
+        private const val REQUEST_BT_PERMISSION = 1001  // Le requestCode explicite
     }
 
     private var a2dpProfile: BluetoothProfile? = null
@@ -42,7 +43,7 @@ class A2dpHandler @Inject constructor(
                 ?.getProfileProxy(mContext, a2dpServiceListener, BluetoothProfile.A2DP)
         } else {
             Timber.e("Permission BLUETOOTH_CONNECT non accordée pour obtenir le proxy A2DP.")
-            permissionDelegate?.requestBluetoothPermission()
+            permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
                 ?: Timber.e("Aucun delegate pour la demande de permission.")
         }
     }
@@ -66,7 +67,6 @@ class A2dpHandler @Inject constructor(
                     Timber.e("Permission BLUETOOTH_CONNECT refusée pour getConnectionState(mDevice)")
                     BluetoothProfile.STATE_DISCONNECTED
                 }
-
             }
         } catch (e: SecurityException) {
             Timber.e(e, "Erreur de sécurité lors de la récupération de l'état.")
@@ -93,12 +93,12 @@ class A2dpHandler @Inject constructor(
                 device.bondState
             } catch (e: SecurityException) {
                 Timber.e(e, "SecurityException lors de l'accès à bondState (ligne 92)")
-                permissionDelegate?.requestBluetoothPermission()
+                permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
                 BluetoothDevice.BOND_NONE
             }
         } else {
             Timber.e("Permission BLUETOOTH_CONNECT refusée lors de l'accès à bondState")
-            permissionDelegate?.requestBluetoothPermission()
+            permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
             BluetoothDevice.BOND_NONE
         }
 
@@ -119,12 +119,12 @@ class A2dpHandler @Inject constructor(
                     device.bondState.toString()
                 } catch (e: SecurityException) {
                     Timber.e(e, "SecurityException lors de l'accès à bondState pour log (ligne 117)")
-                    permissionDelegate?.requestBluetoothPermission()
+                    permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
                     "Erreur accès bondState"
                 }
             } else {
                 Timber.e("Permission BLUETOOTH_CONNECT refusée lors du log bondState (ligne 117)")
-                permissionDelegate?.requestBluetoothPermission()
+                permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
                 "Permission manquante"
             }
 
@@ -132,7 +132,7 @@ class A2dpHandler @Inject constructor(
 
         } else {
             Timber.e("Permission BLUETOOTH_CONNECT refusée lors du log bondState")
-            permissionDelegate?.requestBluetoothPermission()
+            permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
         }
 
         mCurrentState = BluetoothProfile.STATE_DISCONNECTED
@@ -150,17 +150,17 @@ class A2dpHandler @Inject constructor(
                         setPriority(mDevice, 100)
                     } catch (e: SecurityException) {
                         Timber.e(e, "SecurityException lors de setPriority (ligne 111)")
-                        permissionDelegate?.requestBluetoothPermission()
+                        permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
                     }
                 } else {
                     Timber.e("Permission BLUETOOTH_CONNECT refusée lors de l'appel à setPriority()")
-                    permissionDelegate?.requestBluetoothPermission()
+                    permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
                 }
             }
 
             if (!mContext.hasBluetoothConnectPermission()) {
                 Timber.e("Permission BLUETOOTH_CONNECT non accordée pour l'appel connect(), demande de permission en cours...")
-                permissionDelegate?.requestBluetoothPermission()
+                permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
                 return
             }
 
@@ -187,13 +187,13 @@ class A2dpHandler @Inject constructor(
                     setPriority(mDevice, 0)
                 } else {
                     Timber.e("Permission BLUETOOTH_CONNECT refusée lors de l'appel à setPriority()")
-                    permissionDelegate?.requestBluetoothPermission()
+                    permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
                 }
             }
 
             if (!mContext.hasBluetoothConnectPermission()) {
                 Timber.e("Permission BLUETOOTH_CONNECT non accordée pour l'appel disconnect(), demande de permission en cours...")
-                permissionDelegate?.requestBluetoothPermission()
+                permissionDelegate?.requestBluetoothPermission(REQUEST_BT_PERMISSION)
                 return
             }
 

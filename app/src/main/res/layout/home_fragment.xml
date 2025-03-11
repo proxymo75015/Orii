@@ -1,44 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android">
     <data>
+        <!-- Variable partagée pour le binding -->
         <variable
             name="sharedViewModel"
-            type="com.origamilabs.orii.ui.main.MainViewModel" />
+            type="com.origamilabs.orii.ui.SharedViewModel" />
+        <variable
+            name="canFirmwareUpdate"
+            type="Boolean" />
     </data>
-    <LinearLayout
-        android:id="@+id/home_layout"
+
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="match_parent">
 
-        <TextView
-            android:id="@+id/welcomeText"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/home_layout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Bienvenue!"
-            android:textSize="24sp" />
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <TextView
-            android:id="@+id/statusText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Status"
-            android:textSize="18sp"
-            android:layout_marginTop="8dp" />
+            <!-- Image affichant le niveau de batterie -->
+            <ImageView
+                android:id="@+id/batteryLevelImageView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:src="@drawable/battery_level" />
 
-        <Button
-            android:id="@+id/connectButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Connecter"
-            android:layout_marginTop="16dp" />
+            <!-- Bouton de test audio -->
+            <Button
+                android:id="@+id/soundTestButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tester le son"
+                android:layout_marginBottom="8dp" />
 
-        <Button
-            android:id="@+id/disconnectButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Déconnecter"
-            android:layout_marginTop="8dp" />
-    </LinearLayout>
+            <!-- Texte de bienvenue -->
+            <TextView
+                android:id="@+id/welcomeTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Bienvenue !"
+                android:textSize="24sp"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Texte affichant la version du firmware -->
+            <TextView
+                android:id="@+id/firmwareVersionTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Firmware :"
+                android:textSize="18sp"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Bouton pour réessayer la connexion -->
+            <Button
+                android:id="@+id/timeOutRetryButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Réessayer"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Bouton pour arrêter la recherche -->
+            <Button
+                android:id="@+id/stopSearchingButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Arrêter la recherche"
+                android:layout_marginBottom="8dp" />
+
+        </LinearLayout>
+    </ScrollView>
 </layout>

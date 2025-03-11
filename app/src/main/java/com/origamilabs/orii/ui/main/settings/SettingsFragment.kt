@@ -26,7 +26,7 @@ import com.origamilabs.orii.databinding.SettingsFragmentBinding
 import com.origamilabs.orii.manager.AppManager
 import com.origamilabs.orii.models.`enum`.CustomCommandAction
 import com.origamilabs.orii.models.`enum`.GestureType
-import com.origamilabs.orii.ui.main.SharedViewModel
+import com.origamilabs.orii.ui.SharedViewModel
 import com.origamilabs.orii.ui.main.settings.dialog.CustomCommandDialogFragment
 import com.origamilabs.orii.ui.main.settings.dialog.WebHookUrlDialogFragment
 import com.origamilabs.orii.ui.main.settings.gesture.WebHookTutorialActivity

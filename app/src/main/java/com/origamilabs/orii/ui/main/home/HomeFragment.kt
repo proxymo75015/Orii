@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -24,9 +23,10 @@ import com.origamilabs.orii.databinding.HomeFragmentBinding
 import com.origamilabs.orii.manager.AnalyticsManager
 import com.origamilabs.orii.manager.AppManager
 import com.origamilabs.orii.models.AppVersionInfo
+import com.origamilabs.orii.ui.HomeViewModel
 import com.origamilabs.orii.ui.common.AppVersionInfoDialogFragment
 import com.origamilabs.orii.ui.common.BtLocationEnableDialogFragment
-import com.origamilabs.orii.ui.main.SharedViewModel
+import com.origamilabs.orii.ui.SharedViewModel
 import com.origamilabs.orii.ui.main.home.update.UpdateActivity
 import com.origamilabs.orii.utils.SoundTester
 import dagger.hilt.android.AndroidEntryPoint

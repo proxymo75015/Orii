@@ -66,7 +66,7 @@ public final class R {
 
     public static final class attr {
         public static final int action = 0x7f030000;
-        public static final int actionBarDivider = 0x7f030001;
+
         public static final int actionBarItemBackground = 0x7f030002;
         public static final int actionBarPopupTheme = 0x7f030003;
         public static final int actionBarSize = 0x7f030004;

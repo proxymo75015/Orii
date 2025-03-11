@@ -1,4 +1,4 @@
-package com.origamilabs.orii.ui.main
+package com.origamilabs.orii.ui
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

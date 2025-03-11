@@ -6,8 +6,7 @@ import com.origamilabs.orii.R
 
 /**
  * Activité de mise à jour.
- *
- * Cette activité affiche le layout défini dans R.layout.update_activity.
+ * Les chaînes affichées aux utilisateurs sont en français.
  */
 class UpdateActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

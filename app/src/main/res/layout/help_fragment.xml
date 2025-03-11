@@ -8,7 +8,7 @@
             type="Boolean" />
         <variable
             name="sharedViewModel"
-            type="com.origamilabs.orii.ui.main.SharedViewModel" />
+            type="com.origamilabs.orii.ui.SharedViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout

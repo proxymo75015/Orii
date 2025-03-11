@@ -15,23 +15,23 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.origamilabs.orii.R
 
+/**
+ * DialogFragment invitant l'utilisateur à activer le Bluetooth et le GPS.
+ * Les textes et commentaires sont en français, le code en anglais.
+ */
 class BtLocationEnableDialogFragment : DialogFragment() {
 
-    // Indique si le Bluetooth et le GPS sont activés
     private var btEnabled: Boolean = false
     private var gpsEnabled: Boolean = false
 
-    // Références aux Switch UI
     private var btSwitch: Switch? = null
     private var gpsSwitch: Switch? = null
 
-    // Services et outils système
     private lateinit var mBluetoothAdapter: BluetoothAdapter
     private lateinit var mBluetoothManager: BluetoothManager
     private lateinit var mLocationManager: LocationManager
     private lateinit var mHandler: Handler
 
-    // Listener de dismissal de la dialog
     private var mListener: OnDialogDismissListener? = null
 
     interface OnDialogDismissListener {
@@ -49,11 +49,9 @@ class BtLocationEnableDialogFragment : DialogFragment() {
         val inflater = activity?.layoutInflater ?: LayoutInflater.from(context)
         val view = inflater.inflate(R.layout.bt_location_enable_dialog_fragment, null)
 
-        // Initialisation des Switch
         btSwitch = view.findViewById(R.id.bt_switch)
         gpsSwitch = view.findViewById(R.id.gps_switch)
 
-        // Configuration du Switch Bluetooth
         btSwitch?.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 if (btEnabled) {
@@ -64,17 +62,12 @@ class BtLocationEnableDialogFragment : DialogFragment() {
                 btSwitch?.isEnabled = true
                 mHandler.postDelayed({
                     if (btEnabled && gpsEnabled) {
-                        try {
-                            dismiss()
-                        } catch (e: IllegalStateException) {
-                            e.printStackTrace()
-                        }
+                        dismiss()
                     }
                 }, 1000L)
             }
         }
 
-        // Configuration du Switch GPS
         gpsSwitch?.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 if (!gpsEnabled) {
@@ -95,7 +88,6 @@ class BtLocationEnableDialogFragment : DialogFragment() {
 
     override fun onResume() {
         super.onResume()
-        // Vérifie l'état actuel du Bluetooth et du GPS
         btEnabled = mBluetoothAdapter.isEnabled
         gpsEnabled = mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
         if (btEnabled && gpsEnabled) {
@@ -119,14 +111,11 @@ class BtLocationEnableDialogFragment : DialogFragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         val activity = requireActivity()
-        mBluetoothManager =
-            activity.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+        mBluetoothManager = activity.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         mBluetoothAdapter = mBluetoothManager.adapter
-        mLocationManager =
-            activity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        mLocationManager = activity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
 
-    // Met à jour l'état du Switch Bluetooth
     private fun setBtEnabled(enabled: Boolean) {
         btSwitch?.isChecked = enabled
         if (!enabled) {
@@ -134,7 +123,6 @@ class BtLocationEnableDialogFragment : DialogFragment() {
         }
     }
 
-    // Met à jour l'état du Switch GPS
     private fun setGpsEnabled(enabled: Boolean) {
         gpsSwitch?.isChecked = enabled
         if (!enabled) {
@@ -143,16 +131,9 @@ class BtLocationEnableDialogFragment : DialogFragment() {
     }
 
     companion object {
-        // Variable pour éviter d'afficher la dialog plusieurs fois
         private var shown = false
-
         fun newInstance(): BtLocationEnableDialogFragment? {
-            return if (shown) {
-                null
-            } else {
-                shown = true
-                BtLocationEnableDialogFragment()
-            }
+            return if (shown) null else BtLocationEnableDialogFragment().also { shown = true }
         }
     }
 }

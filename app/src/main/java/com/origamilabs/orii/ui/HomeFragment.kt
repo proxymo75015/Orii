@@ -1,158 +1,140 @@
-package com.origamilabs.orii.ui.main.home
+package com.origamilabs.orii.ui
 
-import android.content.ActivityNotFoundException
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModelProvider
-import com.origamilabs.orii.R
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.origamilabs.orii.manager.AppManager
+import com.origamilabs.orii.ui.common.BtLocationEnableDialogFragment
+import com.origamilabs.orii.ui.main.home.update.UpdateActivity
+import com.origamilabs.orii.utils.SoundTester
+import com.origamilabs.orii.Constants
 import com.origamilabs.orii.core.bluetooth.manager.ConnectionManager
 import com.origamilabs.orii.databinding.HomeFragmentBinding
-import com.origamilabs.orii.ui.common.BtLocationEnableDialogFragment
-import com.origamilabs.orii.ui.main.SharedViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
+import javax.inject.Inject
 
+@AndroidEntryPoint
 class HomeFragment : Fragment() {
 
     companion object {
-        private const val TAG = "HomeFragment"
         fun newInstance() = HomeFragment()
     }
 
-    // Binding vers le layout home_fragment
     private var _binding: HomeFragmentBinding? = null
     private val binding get() = _binding!!
 
-    // ViewModel propre au Home (MVVM pour données spécifiques)
-    private lateinit var homeViewModel: HomeViewModel
+    private val homeViewModel: HomeViewModel by viewModels()
+    private val sharedViewModel: SharedViewModel by activityViewModels()
 
-    // ViewModel partagé avec l’activité principale
-    private lateinit var sharedViewModel: SharedViewModel
+    @Inject
+    lateinit var connectionManager: ConnectionManager
 
-    // Pour tester le son (haut-parleur Orii) – composant local
-    private var soundTester: SoundTester? = null
+    private val soundTester: SoundTester by lazy {
+        SoundTester(requireContext()) {
+            binding.soundTestButton.text = homeViewModel.soundTestPlayText
+        }
+    }
 
-    // Receiver pour détecter la fin du téléchargement du firmware (le cas échéant, local)
-    private val firmwareDownloadedReceiver = object : androidx.localbroadcastmanager.content.LocalBroadcastManager? = null
-    // Remarque: on peut utiliser LocalBroadcastManager pour émissions internes, ou LiveData via le ViewModel.
+    private val firmwareDownloadedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            Timber.d("Firmware téléchargé")
+        }
+    }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = DataBindingUtil.inflate(inflater, R.layout.home_fragment, container, false)
-        binding.lifecycleOwner = viewLifecycleOwner  // pour DataBinding avec LiveData
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
+        _binding = HomeFragmentBinding.inflate(inflater, container, false)
+        binding.lifecycleOwner = viewLifecycleOwner
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // Initialisation du HomeViewModel
-        homeViewModel = ViewModelProvider(this).get(HomeViewModel::class.java)
-        // Observation du niveau de batterie de la bague
-        homeViewModel.batteryLevel.observe(viewLifecycleOwner) { level ->
-            binding.batteryLevelImageView.setImageLevel(level ?: 0)
-        }
-
-        // Récupération du SharedViewModel de l’activité hôte (fourni par l’activité via Hilt)
-        sharedViewModel = ViewModelProvider(requireActivity()).get(SharedViewModel::class.java)
-        binding.sharedViewModel = sharedViewModel  // lie le ViewModel partagé au binding si on veut l’utiliser en XML
-
-        // Configuration du SoundTester (lecture d'un son de test sur la bague)
-        soundTester = SoundTester(requireContext()) {
-            // Callback à la fin du test audio : réinitialise le texte du bouton
-            binding.soundTestButton.text = getString(R.string.home_sound_test_play)
-        }
-        binding.soundTestButton.setOnClickListener {
-            Log.d(TAG, "Sound test button clicked")
-            soundTester?.let { tester ->
-                val isPlaying = tester.toggleAudio()
-                // Met à jour le texte du bouton en fonction de l’état lecture/arrêt
-                binding.soundTestButton.text = if (isPlaying) {
-                    getString(R.string.home_sound_test_stop)
-                } else {
-                    getString(R.string.home_sound_test_play)
-                }
-                // Journalise localement l’événement de test audio (plus d’envoi externe)
-                Log.d(TAG, "Sound test ${if (isPlaying) "started" else "stopped"}")
+        binding.apply {
+            homeViewModel.batteryLevel.observe(viewLifecycleOwner) { level ->
+                batteryLevelImageView.setImageLevel(level ?: 0)
             }
-        }
 
-        // Mise à jour du texte de bienvenue (plus de nom utilisateur car pas de login requis)
-        binding.welcomeTextView.text = getString(R.string.home_welcome)  // ex: "Bienvenue !"
+            sharedViewModel = this@HomeFragment.sharedViewModel
 
-        // Mise à jour du texte de version du firmware de la bague connu (sinon N/A)
-        val firmwareVersion = if (AppManager.currentFirmwareVersion == -1) "N/A"
-        else AppManager.currentFirmwareVersion.toString()
-        binding.firmwareTextView.text = getString(R.string.help_firmware, firmwareVersion)
+            soundTestButton.setOnClickListener {
+                Timber.d("Sound test button clicked")
+                val isPlaying = soundTester.toggleAudio()
+                soundTestButton.text = if (isPlaying)
+                    homeViewModel.soundTestStopText
+                else
+                    homeViewModel.soundTestPlayText
+                Timber.d("Sound test ${if (isPlaying) "started" else "stopped"}")
+            }
 
-        // Bouton "Réessayer" en cas d’échec/timeout de connexion -> relance la recherche
-        binding.timeOutRetryButton.setOnClickListener {
-            // Relance la procédure de connexion via le SharedViewModel
-            sharedViewModel.retryConnectOrii()
-            Log.d(TAG, "Retry connect button clicked")
-        }
+            welcomeTextView.text = homeViewModel.welcomeMessage
 
-        // Bouton "Arrêter la recherche"
-        binding.stopSearchingButton.setOnClickListener {
-            sharedViewModel.stopSearchingOrii()
-            Log.d(TAG, "Stop searching button clicked")
-        }
+            firmwareVersionTextView.text = homeViewModel.getFirmwareText()
 
-        // Bouton de mise à jour du firmware (s’il y a une mise à jour disponible en local)
-        binding.updateButton.setOnClickListener {
-            // Lorsqu’on lance la mise à jour, on désactive l’auto-scan temporairement
-            sharedViewModel.setAutoScan(false)
-            AppManager.canFirmwareUpdate = false
-            // Démarre l’activité de mise à jour du firmware (UpdateActivity)
-            startActivity(Intent(requireContext(), UpdateActivity::class.java))
+            timeOutRetryButton.setOnClickListener {
+                sharedViewModel.retryConnectOrii()
+                Timber.d("Retry connect button clicked")
+            }
+
+            stopSearchingButton.setOnClickListener {
+                sharedViewModel.stopSearchingOrii()
+                Timber.d("Stop searching button clicked")
+            }
+
+            updateButton.setOnClickListener {
+                sharedViewModel.setAutoScan(false)
+                AppManager.setCanFirmwareUpdate(false)
+                startActivity(Intent(requireContext(), UpdateActivity::class.java))
+            }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        // Active la recherche automatique de la bague lorsque l’écran Home est visible
         sharedViewModel.setAutoScan(true)
-        // Met à jour l’état du bouton de mise à jour en fonction de AppManager.canFirmwareUpdate
-        binding.canFirmwareUpdate = AppManager.canFirmwareUpdate
+        binding.canFirmwareUpdate = AppManager.getCanFirmwareUpdate()
 
-        // Invite l’utilisateur à activer Bluetooth/GPS si nécessaire pour le scan BLE
         BtLocationEnableDialogFragment.newInstance()?.apply {
-            setOnDialogDismissListener { /* peut implémenter une action après fermeture si besoin */ }
+            setOnDialogDismissListener(object : BtLocationEnableDialogFragment.OnDialogDismissListener {
+                override fun onDialogDismiss(btEnabled: Boolean, gpsEnabled: Boolean) {}
+            })
             show(parentFragmentManager, "enable_bt_gps")
         }
 
-        // Si la bague est déjà connectée, on peut remettre à faux le flag de vérif de firmware
-        if (ConnectionManager.getInstance().isOriiConnected()) {
-            AppManager.firmwareVersionChecked = false
+        if (connectionManager.isOriiConnected()) {
+            AppManager.setFirmwareVersionChecked(false)
         }
 
-        // Inscription du receiver local pour la fin de téléchargement firmware (si toujours utilisé)
-        requireContext().registerReceiver(firmwareDownloadedReceiver,
-            IntentFilter(Constants.FIRMWARE_DOWNLOADED_BROADCAST))
+        LocalBroadcastManager.getInstance(requireContext()).registerReceiver(
+            firmwareDownloadedReceiver,
+            IntentFilter(Constants.FIRMWARE_DOWNLOADED_BROADCAST)
+        )
     }
 
     override fun onPause() {
         super.onPause()
-        // Désenregistrement des receivers
         try {
-            requireContext().unregisterReceiver(firmwareDownloadedReceiver)
+            LocalBroadcastManager.getInstance(requireContext())
+                .unregisterReceiver(firmwareDownloadedReceiver)
         } catch (e: IllegalArgumentException) {
-            Log.d(TAG, "BroadcastReceiver déjà désenregistré")
+            Timber.d("BroadcastReceiver déjà désenregistré")
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        // Arrête le son de test si en cours
-        soundTester?.stopAudio()
+        soundTester.stopAudio()
         _binding = null
     }
-
-    // (Plus de méthodes getOriiFoundCallback() ou getScanTimeoutCallback() ici – la logique de connexion se fait dans le ViewModel)
 }
