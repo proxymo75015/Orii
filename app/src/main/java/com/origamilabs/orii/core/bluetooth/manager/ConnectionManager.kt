@@ -71,7 +71,7 @@ class ConnectionManager @Inject constructor(
 
     @SuppressLint("MissingPermission")
     suspend fun scanAndConnectOriiDevice(timeoutMillis: Long = 10000L): Boolean {
-        // Vérifie que les permissions requises sont accordées
+        // Vérifie que les permissions requises sont accordées.
         if (!hasPermission(Manifest.permission.ACCESS_FINE_LOCATION) ||
             !hasPermission(Manifest.permission.BLUETOOTH_SCAN) ||
             !hasPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
@@ -181,12 +181,28 @@ class ConnectionManager @Inject constructor(
         notifyOriiStateChange(prevState, STATE_DISCONNECTED)
     }
 
+    // Méthode ajoutée pour arrêter le scan en cours.
+    @SuppressLint("MissingPermission")
+    fun stopScan() {
+        bluetoothAdapter?.bluetoothLeScanner?.let { scanner ->
+            currentScanCallback?.let { callback ->
+                try {
+                    scanner.stopScan(callback)
+                    Timber.d("Scan arrêté avec succès")
+                } catch (e: SecurityException) {
+                    Timber.e(e, "Erreur lors de l'arrêt du scan")
+                }
+                currentScanCallback = null
+            }
+        }
+    }
+
     fun getBluetoothGatt(): BluetoothGatt? = bluetoothGatt
     fun getBluetoothAdapter(): BluetoothAdapter? = bluetoothAdapter
     fun isOriiConnected(): Boolean = isConnected
 
     override fun initialize(): Boolean {
-        // Initialisations supplémentaires si nécessaire
+        // Initialisations supplémentaires si nécessaire.
         return true
     }
 

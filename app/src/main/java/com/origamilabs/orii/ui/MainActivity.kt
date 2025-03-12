@@ -11,12 +11,12 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.tabs.TabLayout
-import com.origamilabs.orii.R
 import com.origamilabs.orii.databinding.MainActivityBinding
 import com.origamilabs.orii.ui.main.alerts.AlertsFragment
 import com.origamilabs.orii.ui.main.help.HelpFragment
 import com.origamilabs.orii.ui.main.home.HomeFragment
 import com.origamilabs.orii.ui.main.settings.SettingsFragment
+import com.origamilabs.orii.utils.ResourceProvider
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -31,6 +31,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: MainActivityBinding
     private val sharedViewModel: SharedViewModel by viewModels()
     private var currentTabIndex: Int = 0
+    private lateinit var resourceProvider: ResourceProvider
 
     private val bluetoothPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -44,11 +45,13 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         AppCompatDelegate.setCompatVectorFromResourcesEnabled(true)
 
+        // Initialisation du ResourceProvider pour accéder aux ressources sans utiliser R directement.
+        resourceProvider = ResourceProvider(this)
+
         binding = MainActivityBinding.inflate(layoutInflater).apply {
             lifecycleOwner = this@MainActivity
             viewModel = sharedViewModel
         }
-
         setContentView(binding.root)
 
         currentTabIndex = savedInstanceState?.getInt(SELECTED_TAB_INDEX) ?: 0
@@ -62,17 +65,20 @@ class MainActivity : AppCompatActivity() {
     private fun requestMissingPermissions() {
         val permissionsNeeded = mutableListOf<String>().apply {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                addAll(arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN)
-                    .filterNot(::isPermissionGranted))
+                addAll(arrayOf(
+                    Manifest.permission.BLUETOOTH_CONNECT,
+                    Manifest.permission.BLUETOOTH_SCAN
+                ).filterNot(::isPermissionGranted))
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 !isPermissionGranted(Manifest.permission.POST_NOTIFICATIONS)
             ) {
                 add(Manifest.permission.POST_NOTIFICATIONS)
             }
-
-            addAll(arrayOf(Manifest.permission.READ_SMS, Manifest.permission.READ_PHONE_STATE)
-                .filterNot(::isPermissionGranted))
+            addAll(arrayOf(
+                Manifest.permission.READ_SMS,
+                Manifest.permission.READ_PHONE_STATE
+            ).filterNot(::isPermissionGranted))
         }
 
         if (permissionsNeeded.isNotEmpty()) {
@@ -88,10 +94,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupTabs() = with(binding.tabs) {
         removeAllTabs()
-        addTab(newTab().setText(R.string.tab_home).setTag("home"))
-        addTab(newTab().setText(R.string.tab_alerts).setTag("alerts"))
-        addTab(newTab().setText(R.string.tab_settings).setTag("settings"))
-        addTab(newTab().setText(R.string.tab_help).setTag("help"))
+        addTab(newTab().setText(resourceProvider.tabHome).setTag("home"))
+        addTab(newTab().setText(resourceProvider.tabAlerts).setTag("alerts"))
+        addTab(newTab().setText(resourceProvider.tabSettings).setTag("settings"))
+        addTab(newTab().setText(resourceProvider.tabHelp).setTag("help"))
 
         addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
             override fun onTabSelected(tab: TabLayout.Tab) {
@@ -103,12 +109,11 @@ class MainActivity : AppCompatActivity() {
                 }
                 currentTabIndex = tab.position
                 supportFragmentManager.beginTransaction()
-                    .replace(R.id.container, fragment, tab.tag.toString())
+                    .replace(resourceProvider.containerId, fragment, tab.tag.toString())
                     .commit()
 
                 Timber.d("Onglet sélectionné : %s", tab.tag)
             }
-
             override fun onTabUnselected(tab: TabLayout.Tab?) {}
             override fun onTabReselected(tab: TabLayout.Tab?) {}
         })

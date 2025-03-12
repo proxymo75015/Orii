@@ -1,6 +1,6 @@
 package com.origamilabs.orii.ui
 
-import android.util.Log
+import timber.log.Timber
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -28,14 +28,10 @@ class SharedViewModel @Inject constructor(
     private val _connectionState = MutableLiveData<String>()
     val connectionState: LiveData<String> get() = _connectionState
 
-    private val _canFirmwareUpdate = MutableLiveData<Boolean>()
-    val canFirmwareUpdate: LiveData<Boolean> get() = _canFirmwareUpdate
-
     private var autoScanEnabled: Boolean = false
 
     init {
         _connectionState.value = if (connectionManager.isOriiConnected()) "connected" else "disconnected"
-        _canFirmwareUpdate.value = AppManager.canFirmwareUpdate
     }
 
     fun retryConnectOrii() {
@@ -44,11 +40,11 @@ class SharedViewModel @Inject constructor(
             val success = connectionManager.scanAndConnectOriiDevice()
             withContext(Dispatchers.Main) {
                 if (success) {
-                    Log.d(TAG, "Orii device found and connected")
+                    Timber.d("Orii device found and connected")
                     _connectionState.value = "connected"
                     AppManager.setFirmwareVersionChecked(false)
                 } else {
-                    Log.d(TAG, "Orii device not found")
+                    Timber.d("Orii device not found")
                     _connectionState.value = "disconnected"
                 }
             }
@@ -56,9 +52,10 @@ class SharedViewModel @Inject constructor(
     }
 
     fun stopSearchingOrii() {
+        // Appel à la méthode stopScan() ajoutée dans ConnectionManager.
         connectionManager.stopScan()
         _connectionState.value = if (connectionManager.isOriiConnected()) "connected" else "disconnected"
-        Log.d(TAG, "Stopped scanning for Orii")
+        Timber.d("Stopped scanning for Orii")
     }
 
     fun setAutoScan(enable: Boolean) {
@@ -68,11 +65,6 @@ class SharedViewModel @Inject constructor(
         } else if (!enable && !connectionManager.isOriiConnected()) {
             connectionManager.stopScan()
         }
-        Log.d(TAG, "Auto-scan set to $enable")
-    }
-
-    fun notifyFirmwareUpdateAvailable(available: Boolean) {
-        _canFirmwareUpdate.postValue(available)
-        AppManager.canFirmwareUpdate = available
+        Timber.d("Auto-scan set to $enable")
     }
 }

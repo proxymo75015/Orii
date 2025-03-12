@@ -5,8 +5,7 @@ import android.media.AudioManager
 import android.media.MediaPlayer
 import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
-import android.util.Log
-import com.origamilabs.orii.R
+import androidx.core.content.getSystemService
 import java.util.Locale
 
 /**
@@ -15,38 +14,49 @@ import java.util.Locale
  */
 class SoundTester(
     context: Context,
+    private val resourceProvider: ResourceProvider,
     private val onCompletedCallback: () -> Unit
 ) {
-    private val TAG = "SoundTester"
-    private val audioManager: AudioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-    private var mediaPlayer: MediaPlayer? = MediaPlayer.create(context, R.raw.e_audio_demo_nonna).apply {
-        setOnCompletionListener { onCompletedCallback() }
+    // Utilisation de l'extension KTX pour obtenir AudioManager de façon idiomatique
+    private val audioManager: AudioManager = context.getSystemService()!!
+
+    // Initialisation paresseuse du MediaPlayer
+    private val mediaPlayer: MediaPlayer by lazy {
+        MediaPlayer.create(context, resourceProvider.eAudioDemoNonna).apply {
+            setOnCompletionListener { onCompletedCallback() }
+        }
     }
+
+    // TextToSpeech sera initialisé de façon asynchrone
     private var tts: TextToSpeech? = null
-    private val speakMessage: String = context.getString(R.string.tts_test_message)
-    private val useTTS: Boolean
+    private val speakMessage: String = resourceProvider.ttsTestMessage
+
+    // Détermine si l'on utilise TextToSpeech en fonction de la langue et du pays
+    private val useTTS: Boolean = when {
+        Locale.getDefault().language.equals("en", ignoreCase = true) -> false
+        Locale.getDefault().language.equals("fr", ignoreCase = true) -> false
+        Locale.getDefault().let { it.language.equals("zh", ignoreCase = true) && it.country.equals("TW", ignoreCase = true) } -> false
+        Locale.getDefault().language.equals("ja", ignoreCase = true) -> false
+        else -> true
+    }
 
     init {
-        val locale = Locale.getDefault()
-        useTTS = when {
-            locale.language.equals("en", ignoreCase = true) -> false
-            locale.language.equals("zh", ignoreCase = true) && locale.country.equals("TW", ignoreCase = true) -> false
-            locale.language.equals("ja", ignoreCase = true) -> false
-            else -> true
+        // Optionnel : ajustement de la locale pour Hong Kong si nécessaire
+        if (Locale.getDefault().language.equals("zh", ignoreCase = true) &&
+            Locale.getDefault().country.equals("HK", ignoreCase = true)
+        ) {
+            // Intentionnellement vide - aucun ajustement requis pour HK
+            Unit
         }
-
-        if (locale.language.equals("zh", ignoreCase = true) && locale.country.equals("HK", ignoreCase = true)) {
-            // Ajustement de la locale pour Hong Kong si nécessaire
-        }
-
-        if (useTTS && tts == null) {
+        if (useTTS) {
             tts = TextToSpeech(context) { status ->
                 if (status == TextToSpeech.SUCCESS) {
                     tts?.apply {
                         setTTSLanguage(this)
                         setOnUtteranceProgressListener(object : UtteranceProgressListener() {
-                            override fun onStart(utteranceId: String?) {}
-                            override fun onError(utteranceId: String?) {}
+                            override fun onStart(utteranceId: String?) = Unit
+                            @Deprecated("Deprecated in Java", ReplaceWith(""), level = DeprecationLevel.WARNING)
+                            override fun onError(utteranceId: String?) = Unit
                             override fun onDone(utteranceId: String?) {
                                 onCompletedCallback()
                             }
@@ -57,33 +67,34 @@ class SoundTester(
         }
     }
 
-    fun setTTSLanguage(tts: TextToSpeech) {
-        var locale = Locale.getDefault()
-        if (locale.language.equals("zh", ignoreCase = true) && locale.country.equals("HK", ignoreCase = true)) {
-            locale = Locale("yue", "HK")
-        }
+    private fun setTTSLanguage(tts: TextToSpeech) {
+        val locale = if (Locale.getDefault().let {
+                it.language.equals("zh", ignoreCase = true) && it.country.equals("HK", ignoreCase = true)
+            }) Locale("yue", "HK")
+        else Locale.getDefault()
         tts.language = locale
     }
 
-    fun playAudio() {
+    // Méthode privée pour jouer l'audio
+    private fun playAudio() {
         if (useTTS) {
-            tts?.let {
-                setTTSLanguage(it)
-                it.speak(speakMessage, TextToSpeech.QUEUE_FLUSH, null, "utteranceId")
-            } ?: throw NullPointerException("TextToSpeech is null")
+            tts?.apply {
+                setTTSLanguage(this)
+                speak(speakMessage, TextToSpeech.QUEUE_FLUSH, null, "utteranceId")
+            } ?: error("TextToSpeech is null")
         } else {
-            mediaPlayer?.apply {
+            mediaPlayer.apply {
                 seekTo(0)
                 start()
-            } ?: throw NullPointerException("MediaPlayer is null")
+            }
         }
     }
 
     fun stopAudio() {
         if (useTTS) {
             tts?.stop()
-        } else {
-            mediaPlayer?.takeIf { it.isPlaying }?.pause()
+        } else if (mediaPlayer.isPlaying) {
+            mediaPlayer.pause()
         }
     }
 
@@ -97,26 +108,23 @@ class SoundTester(
                     playAudio()
                     true
                 }
-            } ?: throw NullPointerException("TextToSpeech is null")
+            } ?: error("TextToSpeech is null")
         } else {
-            mediaPlayer?.let {
-                if (it.isPlaying) {
-                    stopAudio()
-                    false
-                } else {
-                    playAudio()
-                    true
-                }
-            } ?: throw NullPointerException("MediaPlayer is null")
+            if (mediaPlayer.isPlaying) {
+                stopAudio()
+                false
+            } else {
+                playAudio()
+                true
+            }
         }
     }
 
     fun close() {
-        mediaPlayer?.apply {
-            stop()
-            release()
+        runCatching {
+            mediaPlayer.stop()
+            mediaPlayer.release()
         }
-        mediaPlayer = null
         tts?.apply {
             stop()
             shutdown()

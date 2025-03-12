@@ -1,6 +1,7 @@
 package com.origamilabs.orii.utils
 
-import android.content.Context import androidx.core.content.ContextCompat
+import android.content.Context
+import androidx.core.content.ContextCompat
 
 class ResourceProvider(private val context: Context) {
 
@@ -46,4 +47,56 @@ class ResourceProvider(private val context: Context) {
         require(id != 0) { "La ressource 'help_firmware' n'a pas été trouvée." }
         return context.getString(id, version)
     }
+
+    // Propriétés pour les chaînes des onglets
+    val tabHome: String
+        get() {
+            val id = context.resources.getIdentifier("tab_home", "string", context.packageName)
+            require(id != 0) { "La ressource 'tab_home' n'a pas été trouvée." }
+            return context.getString(id)
+        }
+
+    val tabAlerts: String
+        get() {
+            val id = context.resources.getIdentifier("tab_alerts", "string", context.packageName)
+            require(id != 0) { "La ressource 'tab_alerts' n'a pas été trouvée." }
+            return context.getString(id)
+        }
+
+    val tabSettings: String
+        get() {
+            val id = context.resources.getIdentifier("tab_settings", "string", context.packageName)
+            require(id != 0) { "La ressource 'tab_settings' n'a pas été trouvée." }
+            return context.getString(id)
+        }
+
+    val tabHelp: String
+        get() {
+            val id = context.resources.getIdentifier("tab_help", "string", context.packageName)
+            require(id != 0) { "La ressource 'tab_help' n'a pas été trouvée." }
+            return context.getString(id)
+        }
+
+    // Accès à l'ID du container pour la gestion des fragments
+    val containerId: Int
+        get() {
+            val id = context.resources.getIdentifier("container", "id", context.packageName)
+            require(id != 0) { "La ressource 'container' n'a pas été trouvée." }
+            return id
+        }
+
+    val eAudioDemoNonna: Int
+        get() {
+            val id = context.resources.getIdentifier("e_audio_demo_nonna", "raw", context.packageName)
+            require(id != 0) { "La ressource 'e_audio_demo_nonna' n'a pas été trouvée." }
+            return id
+        }
+
+    val ttsTestMessage: String
+        get() {
+            val id = context.resources.getIdentifier("tts_test_message", "string", context.packageName)
+            require(id != 0) { "La ressource 'tts_test_message' n'a pas été trouvée." }
+            return context.getString(id)
+        }
+
 }
