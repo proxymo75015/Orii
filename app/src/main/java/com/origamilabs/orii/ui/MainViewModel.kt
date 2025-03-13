@@ -1,11 +1,14 @@
 package com.origamilabs.orii.ui
 
+import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.origamilabs.orii.data.DeviceUserRepository
+import com.origamilabs.orii.db.SettingsDataStore
+import com.origamilabs.orii.models.User
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -20,7 +23,7 @@ sealed class ConnectionState {
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val deviceUserRepository: DeviceUserRepository
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _userName = MutableLiveData<String>()
@@ -30,7 +33,12 @@ class MainViewModel @Inject constructor(
     val connectionState: LiveData<ConnectionState> = _connectionState
 
     init {
-        _userName.value = deviceUserRepository.getLocalUserName()
+        // Lecture du User en DataStore, on récupère son nom pour l’afficher
+        viewModelScope.launch {
+            SettingsDataStore.getUser(context).collect { user ->
+                _userName.postValue(user?.name ?: "Unknown user")
+            }
+        }
         _connectionState.value = ConnectionState.Disconnected
     }
 
@@ -44,5 +52,12 @@ class MainViewModel @Inject constructor(
 
     fun disconnectOrii() {
         _connectionState.value = ConnectionState.Disconnected
+    }
+
+    // Exemple: méthode pour sauvegarder le User en DataStore
+    fun saveUser(user: User) {
+        viewModelScope.launch {
+            SettingsDataStore.setUser(context, user)
+        }
     }
 }

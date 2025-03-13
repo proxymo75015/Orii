@@ -11,7 +11,6 @@ import com.android.volley.toolbox.HttpHeaderParser
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.origamilabs.orii.api.Config
-import com.origamilabs.orii.db.SharedPreferences
 import java.io.UnsupportedEncodingException
 import java.nio.charset.Charset
 import java.util.HashMap

@@ -11,12 +11,13 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.observe
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.origamilabs.orii.Constants
 import com.origamilabs.orii.manager.AppManager
 import com.origamilabs.orii.ui.common.BtLocationEnableDialogFragment
 import com.origamilabs.orii.ui.main.home.update.UpdateActivity
 import com.origamilabs.orii.utils.SoundTester
-import com.origamilabs.orii.Constants
 import com.origamilabs.orii.core.bluetooth.manager.ConnectionManager
 import com.origamilabs.orii.databinding.HomeFragmentBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -61,42 +62,49 @@ class HomeFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.apply {
-            homeViewModel.batteryLevel.observe(viewLifecycleOwner) { level ->
-                batteryLevelImageView.setImageLevel(level ?: 0)
-            }
 
-            sharedViewModel = this@HomeFragment.sharedViewModel
+        binding.sharedViewModel = this@HomeFragment.sharedViewModel
 
-            soundTestButton.setOnClickListener {
-                Timber.d("Sound test button clicked")
-                val isPlaying = soundTester.toggleAudio()
-                soundTestButton.text = if (isPlaying)
-                    homeViewModel.soundTestStopText
-                else
-                    homeViewModel.soundTestPlayText
-                Timber.d("Sound test ${if (isPlaying) "started" else "stopped"}")
-            }
+        // Exemple : observer et afficher le micMode
+        homeViewModel.micMode.observe(viewLifecycleOwner) { mode ->
+            binding.micModeTextView.text = "Mic mode: $mode"
+        }
 
-            welcomeTextView.text = homeViewModel.welcomeMessage
+        // Exemple : bouton pour changer le micMode (entre 1 et 2)
+        binding.toggleMicModeButton.setOnClickListener {
+            val currentMode = homeViewModel.micMode.value ?: 1
+            val newMode = if (currentMode == 1) 2 else 1
+            homeViewModel.setMicMode(newMode)
+        }
 
-            firmwareVersionTextView.text = homeViewModel.getFirmwareText()
+        // Sound test
+        binding.soundTestButton.setOnClickListener {
+            Timber.d("Sound test button clicked")
+            val isPlaying = soundTester.toggleAudio()
+            binding.soundTestButton.text = if (isPlaying)
+                homeViewModel.soundTestStopText
+            else
+                homeViewModel.soundTestPlayText
+            Timber.d("Sound test ${if (isPlaying) "started" else "stopped"}")
+        }
 
-            timeOutRetryButton.setOnClickListener {
-                sharedViewModel.retryConnectOrii()
-                Timber.d("Retry connect button clicked")
-            }
+        binding.welcomeTextView.text = homeViewModel.welcomeMessage
+        binding.firmwareVersionTextView.text = homeViewModel.getFirmwareText()
 
-            stopSearchingButton.setOnClickListener {
-                sharedViewModel.stopSearchingOrii()
-                Timber.d("Stop searching button clicked")
-            }
+        binding.timeOutRetryButton.setOnClickListener {
+            sharedViewModel.retryConnectOrii()
+            Timber.d("Retry connect button clicked")
+        }
 
-            updateButton.setOnClickListener {
-                sharedViewModel.setAutoScan(false)
-                AppManager.setCanFirmwareUpdate(false)
-                startActivity(Intent(requireContext(), UpdateActivity::class.java))
-            }
+        binding.stopSearchingButton.setOnClickListener {
+            sharedViewModel.stopSearchingOrii()
+            Timber.d("Stop searching button clicked")
+        }
+
+        binding.updateButton.setOnClickListener {
+            sharedViewModel.setAutoScan(false)
+            AppManager.setCanFirmwareUpdate(false)
+            startActivity(Intent(requireContext(), UpdateActivity::class.java))
         }
     }
 

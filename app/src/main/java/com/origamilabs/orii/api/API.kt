@@ -13,7 +13,6 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.origamilabs.orii.R
 import com.origamilabs.orii.api.request.OriiRequest
-import com.origamilabs.orii.db.SharedPreferences
 import io.fabric.sdk.android.services.common.AbstractSpiCall
 import java.io.File
 

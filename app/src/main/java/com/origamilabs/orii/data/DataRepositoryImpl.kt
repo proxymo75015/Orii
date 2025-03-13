@@ -1,7 +1,7 @@
 package com.origamilabs.orii.data
 
 import android.content.Context
-import com.origamilabs.orii.model.Item
+import com.origamilabs.orii.models.Item
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
 import javax.inject.Inject

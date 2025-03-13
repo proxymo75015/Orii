@@ -2,46 +2,66 @@ package com.origamilabs.orii.manager
 
 import android.content.Context
 import androidx.room.Room
-import com.origamilabs.orii.Constants
 import com.origamilabs.orii.db.AppDatabase
-import com.origamilabs.orii.db.SharedPreferences
-import com.origamilabs.orii.models.FirmwareVersionInfo
-import com.origamilabs.orii.models.User
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 
 /**
  * Singleton qui gère l'état global de l'application.
  */
 object AppManager {
+
+    // Scope pour exécuter du code en arrière-plan (IO) via coroutines
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    // Champs existants
     var batteryLevel: Int = -1
         private set
     var firmwareVersion: Int = -1
         private set
-    var firmwareVersionChecked: Boolean = false
-        private set
-    var canFirmwareUpdate: Boolean = false
-        private set
-    var canFirmwareForceUpdate: Boolean = false
-        private set
-    var firmwareVersionInfo: FirmwareVersionInfo? = null
-        private set
 
+    // Accès à la base de données Room
     lateinit var database: AppDatabase
         private set
-    lateinit var sharedPreferences: SharedPreferences
-        private set
 
+    /**
+     * Initialise l'AppManager.
+     * À appeler depuis l'Application ou un endroit central au démarrage.
+     */
     fun init(applicationContext: Context) {
+        // Initialisation DB Room
         database = Room.databaseBuilder(
             applicationContext,
             AppDatabase::class.java,
             "orii-app-db"
         ).build()
 
-        sharedPreferences = SharedPreferences.INSTANCE.apply { init(applicationContext) }
-        // Autres initialisations éventuelles…
+        // Si vous souhaitez stocker/restituer certaines valeurs via DataStore,
+        // vous pouvez désormais l'appeler directement dans votre code,
+        // par ex. SettingsDataStore.getMicMode(context) etc.
+        // Aucune initialisation globale n'est requise pour DataStore.
     }
 
-    fun close() { /* Implémentez la fermeture des ressources si nécessaire */ }
+    /**
+     * Permet d'exécuter une opération sur un thread IO via coroutines,
+     * sans bloquer le thread principal.
+     */
+    fun runQueryOnBackground(block: suspend () -> Unit) {
+        appScope.launch {
+            block()
+        }
+    }
+
+    /**
+     * Libère éventuellement les ressources liées à AppManager.
+     */
+    fun close() {
+        // Annule toutes les coroutines lancées via appScope
+        appScope.cancel()
+    }
 
     fun getBatteryLevel() = batteryLevel
     fun setBatteryLevel(level: Int) {
@@ -51,25 +71,5 @@ object AppManager {
     fun getFirmwareVersion() = firmwareVersion
     fun setFirmwareVersion(version: Int) {
         firmwareVersion = version
-    }
-
-    fun getFirmwareVersionChecked() = firmwareVersionChecked
-    fun setFirmwareVersionChecked(checked: Boolean) {
-        firmwareVersionChecked = checked
-    }
-
-    fun getCanFirmwareUpdate() = canFirmwareUpdate
-    fun setCanFirmwareUpdate(update: Boolean) {
-        canFirmwareUpdate = update
-    }
-
-    fun getCanFirmwareForceUpdate() = canFirmwareForceUpdate
-    fun setCanFirmwareForceUpdate(forceUpdate: Boolean) {
-        canFirmwareForceUpdate = forceUpdate
-    }
-
-    fun getFirmwareVersionInfo() = firmwareVersionInfo
-    fun setFirmwareVersionInfo(info: FirmwareVersionInfo) {
-        firmwareVersionInfo = info
     }
 }

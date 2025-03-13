@@ -1,8 +1,12 @@
 package com.origamilabs.orii.utils
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import androidx.core.content.ContextCompat
 
+/**
+ * Fournisseur de ressources pour accéder aux ressources de l'application sans dépendance directe sur R.
+ */
 class ResourceProvider(private val context: Context) {
 
     // Accès de base aux ressources via l'ID
@@ -16,11 +20,10 @@ class ResourceProvider(private val context: Context) {
         return context.getString(resId, *formatArgs)
     }
 
-    fun getDrawable(resId: Int) = ContextCompat.getDrawable(context, resId)
+    fun getDrawable(resId: Int): Drawable? = ContextCompat.getDrawable(context, resId)
     fun getColor(resId: Int) = ContextCompat.getColor(context, resId)
 
-    // Récupération dynamique de l'ID de la ressource en se basant sur son nom défini dans le XML.
-    // Cette méthode permet de ne pas dépendre directement du fichier R.
+    // Accès aux ressources par nom pour éviter une dépendance directe à R
     val homeWelcome: String
         get() {
             val id = context.resources.getIdentifier("home_welcome", "string", context.packageName)
@@ -48,7 +51,6 @@ class ResourceProvider(private val context: Context) {
         return context.getString(id, version)
     }
 
-    // Propriétés pour les chaînes des onglets
     val tabHome: String
         get() {
             val id = context.resources.getIdentifier("tab_home", "string", context.packageName)
@@ -77,7 +79,7 @@ class ResourceProvider(private val context: Context) {
             return context.getString(id)
         }
 
-    // Accès à l'ID du container pour la gestion des fragments
+    // ID du container pour la gestion des fragments
     val containerId: Int
         get() {
             val id = context.resources.getIdentifier("container", "id", context.packageName)
@@ -99,4 +101,61 @@ class ResourceProvider(private val context: Context) {
             return context.getString(id)
         }
 
+    // Propriétés pour rendre AppService indépendant de R
+    val notificationConnectionChannelId: String
+        get() {
+            val id = context.resources.getIdentifier("notification_connection_channel_id", "string", context.packageName)
+            require(id != 0) { "La ressource 'notification_connection_channel_id' n'a pas été trouvée." }
+            return context.getString(id)
+        }
+
+    val notificationBatteryChannelId: String
+        get() {
+            val id = context.resources.getIdentifier("notification_battery_channel_id", "string", context.packageName)
+            require(id != 0) { "La ressource 'notification_battery_channel_id' n'a pas été trouvée." }
+            return context.getString(id)
+        }
+
+    val notificationTitleBatteryLow: String
+        get() {
+            val id = context.resources.getIdentifier("notification_title_battery_low", "string", context.packageName)
+            require(id != 0) { "La ressource 'notification_title_battery_low' n'a pas été trouvée." }
+            return context.getString(id)
+        }
+
+    val notificationTextBatteryLow: String
+        get() {
+            val id = context.resources.getIdentifier("notification_text_battery_low", "string", context.packageName)
+            require(id != 0) { "La ressource 'notification_text_battery_low' n'a pas été trouvée." }
+            return context.getString(id)
+        }
+
+    val notificationConnectionChannelName: String
+        get() {
+            val id = context.resources.getIdentifier("notification_connection_channel_name", "string", context.packageName)
+            require(id != 0) { "La ressource 'notification_connection_channel_name' n'a pas été trouvée." }
+            return context.getString(id)
+        }
+
+    val appName: String
+        get() {
+            val id = context.resources.getIdentifier("app_name", "string", context.packageName)
+            require(id != 0) { "La ressource 'app_name' n'a pas été trouvée." }
+            return context.getString(id)
+        }
+
+    val icStatusbar: Drawable?
+        get() {
+            val id = context.resources.getIdentifier("ic_statusbar", "drawable", context.packageName)
+            require(id != 0) { "La ressource 'ic_statusbar' n'a pas été trouvée." }
+            return ContextCompat.getDrawable(context, id)
+        }
+
+    // Nouvelle propriété pour l'icône de notification
+    val notificationIcon: Int
+        get() {
+            val id = context.resources.getIdentifier("ic_notification", "drawable", context.packageName)
+            require(id != 0) { "La ressource 'ic_notification' n'a pas été trouvée." }
+            return id
+        }
 }
