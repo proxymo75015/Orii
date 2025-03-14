@@ -7,7 +7,7 @@ import androidx.core.content.ContextCompat
 /**
  * Fournisseur de ressources pour accéder aux ressources de l'application sans dépendance directe sur R.
  */
-class ResourceProvider(private val context: Context) {
+class ResourceProvider(val context: Context) {
 
     // Accès de base aux ressources via l'ID
     fun getString(resId: Int): String {

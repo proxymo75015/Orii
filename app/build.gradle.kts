@@ -112,4 +112,9 @@ dependencies {
     // Gson (pour la sérialisation JSON dans DataStore)
     // ————————————
     implementation("com.google.code.gson:gson:2.12.1")
+
+    // ————————————
+    // Intégration de la bibliothèque Material Components de Google
+    // ————————————
+    implementation("com.google.android.material:material:1.12.0")
 }

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Vous pouvez ajouter ici des éléments UI (boutons, TextView, etc.) pour tester l'assistant -->
+
+    <TextView
+        android:id="@+id/textViewStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Assistant vocal"
+        android:textSize="18sp" />
+
+    <!-- Bouton pour démarrer la reconnaissance vocale -->
+    <Button
+        android:id="@+id/buttonStartListening"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Commencer"
+        android:onClick="onStartListeningClicked" />
+</LinearLayout>
