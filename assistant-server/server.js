@@ -53,7 +53,7 @@ app.post('/chat-command', async (req, res) => {
 
         console.log("Réponse OpenAI :", JSON.stringify(response, null, 2));
 
-        if (response.choices[0].message?.function_call) {
+        if (response.choices[0]?.message?.function_call) {
             res.json({
                 type: "command",
                 action: response.choices[0].message.function_call.name,
@@ -63,10 +63,20 @@ app.post('/chat-command', async (req, res) => {
         } else {
             res.json({
                 type: "text",
-                message: response.choices[0].message?.content || "Je ne sais pas quoi faire."
+                message: response.choices[0]?.message?.content || "Je ne sais pas quoi faire."
             });
         }
     } catch (error) {
         console.error("Erreur OpenAI :", error);
         res.status(500).json({ error: "Erreur OpenAI. Vérifie ta clé API et ton quota." });
+    }
+});
 
+// Endpoint de test pour vérifier si le serveur tourne
+app.get('/healthz', (req, res) => {
+    res.status(200).send('OK');
+});
+
+// Démarrer le serveur
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Serveur lancé sur le port ${PORT}`));
