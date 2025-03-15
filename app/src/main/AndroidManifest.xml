@@ -99,4 +99,7 @@
             <action android:name="com.origamilabs.orii.ACTION_GESTURE_FLAT_TRIPLE_TAP" />
         </intent-filter>
     </receiver>
+
+    <receiver android:name="com.origamilabs.orii.voice.commands.SetAlarmCommand" />
+
 </manifest>
